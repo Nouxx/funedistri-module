@@ -1,0 +1,40 @@
+# -*- coding: utf-8 -*-
+# __manifest__.py is the ONE file Odoo looks for to recognise a folder as a
+# module. It is a plain Python dict of metadata. Odoo.sh treats every top-level
+# repo folder that contains this file as an installable module.
+{
+    # Human-readable name shown in the Apps list.
+    "name": "Funedistri Coffin Configurator",
+    # Version string. We use the SHORT form (no Odoo-series prefix) on purpose.
+    # If you prefix the series and it mismatches the running server, Odoo marks
+    # the module `installable=False` ("incompatible version"). Our local dev image
+    # `odoo:19` reports series 19.0, while prod (funedistri.odoo.com on Odoo.sh) is
+    # 19.2 — so any hard-coded series would break one of the two. With the short
+    # form Odoo auto-prepends whatever series actually loads the module, so it
+    # installs on BOTH. Three parts = module major.minor.patch, our own versioning.
+    "version": "1.0.0",
+    "summary": "Configurable B2B coffins with role-based price visibility.",
+    "category": "Sales",
+    "author": "Funedistri",
+    "website": "https://funedistri.odoo.com",
+    "license": "LGPL-3",
+    # depends = other modules that MUST be installed first. Installing this module
+    # auto-installs these. We build on Odoo's e-commerce (website_sale) which
+    # itself pulls in sale. Listing sale explicitly documents that we use it
+    # directly (sale.order / sale.order.line) and not only through website_sale.
+    "depends": [
+        "website_sale",  # the e-commerce frontend B2B users shop on
+        "sale",          # sale.order / sale.order.line — the Order backbone
+    ],
+    # data = files (XML/CSV) loaded on install/update, in this order. Empty for
+    # now — the tracer coffin, views, security and rules arrive in later steps.
+    "data": [],
+    # demo = data loaded ONLY when the DB is created with demo enabled (our dev
+    # DB). Never loads in production. The demo company + portal users + sample
+    # coffin land here in Step 3.
+    "demo": [],
+    # application=False → this is a feature module, not a standalone "app" tile.
+    "application": False,
+    # installable=True → it shows up and can be installed.
+    "installable": True,
+}

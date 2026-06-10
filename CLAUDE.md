@@ -56,7 +56,8 @@ The detailed, resolved design is under **Design decisions** below.
 
 ## Repo & deployment
 - This repo **becomes the Odoo.sh addons repo**. The module lives in the repo, `git push` → Odoo.sh deploys. No separate copy step; local dev mirrors prod.
-- **Odoo version = 19.2 (CONFIRMED 2026-06-10).** Docker base image `odoo:19`, manifest version string `19.2.x.y.z`.
+- **Odoo version: prod (funedistri.odoo.com on Odoo.sh) = 19.2; local dev image `odoo:19` reports series 19.0** (verified at Step 0 scaffold, 2026-06-10). The community `odoo:19` image is the 19.0 generation — local does NOT mirror prod at the series level.
+  - **Manifest version = short form `1.0.0`** (NOT `19.x.*`). A series-prefixed version that mismatches the running server makes Odoo set `installable=False` ("incompatible version"). The short form lets Odoo auto-prepend whichever series loads it, so the module installs on BOTH 19.0 (local) and 19.2 (prod). See `funedistri_coffin_configurator/__manifest__.py`.
 
 ## Coffin configurator = HYBRID (native attributes + thin custom website layer)
 The owner needs a long list of options, some priced, some informational, with image choices, a date field, and one-level conditional show/hide. Native Odoo covers most of it; a small custom layer fills the gaps.

@@ -1,0 +1,35 @@
+# Local-dev only. Odoo.sh ignores this file (no manifest) and runs its own
+# infrastructure. This mirrors prod closely enough to develop against:
+#   - odoo:19  → same Odoo series as Odoo.sh (19.2)
+#   - postgres:16 → Odoo 19 needs PostgreSQL 14+
+services:
+  db:
+    image: postgres:16
+    environment:
+      # Odoo connects as this role; values are referenced again in odoo.conf.
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      # Odoo manages its own databases, so we keep the bootstrap DB as 'postgres'.
+      POSTGRES_DB: postgres
+    volumes:
+      # Named volume → Postgres data survives `docker compose down` (not down -v).
+      - pgdata:/var/lib/postgresql/data
+
+  odoo:
+    image: odoo:19
+    depends_on:
+      - db
+    ports:
+      # Host 8069 → Odoo web. Open http://localhost:8069 after `make dev`.
+      - "8069:8069"
+    volumes:
+      # Mount the WHOLE repo root as an addons path. Our module folder
+      # (funedistri_coffin_configurator) is then visible at
+      # /mnt/extra-addons/funedistri_coffin_configurator. Odoo scans for
+      # __manifest__.py and ignores non-module dirs (docs/, .git, *.md).
+      - ./:/mnt/extra-addons
+      # Our config (addons path, DB creds) into the place Odoo reads by default.
+      - ./odoo.conf:/etc/odoo/odoo.conf
+
+volumes:
+  pgdata:

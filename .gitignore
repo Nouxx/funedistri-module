@@ -1,0 +1,6 @@
+# Python bytecode (Odoo generates these in the mounted addons volume).
+__pycache__/
+*.py[cod]
+
+# Local editor / OS noise.
+.DS_Store
