@@ -109,3 +109,10 @@ The deadline by which the Salesman needs the order delivered. Logistics only;
 
 **Engraving text**:
 Free text engraved on the plate (≤20 chars).
+
+**Reveal rule**:
+A one-level link on a Coffin model: choosing a given Option value (or setting a
+given flag) reveals — and may require — another configuration field. E.g.
+engraving = yes reveals the Death date. The single statement of when a field
+shows; the same rule the frontend obeys and the order validates against.
+_Avoid_: condition, dependency, exclusion (Odoo's native, different thing)
