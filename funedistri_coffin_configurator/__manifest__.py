@@ -26,9 +26,16 @@
         "website_sale",  # the e-commerce frontend B2B users shop on
         "sale",          # sale.order / sale.order.line — the Order backbone
     ],
-    # data = files (XML/CSV) loaded on install/update, in this order. Empty for
-    # now — the tracer coffin, views, security and rules arrive in later steps.
-    "data": [],
+    # data = files (XML/CSV) loaded on install/update, in this order.
+    "data": [
+        # Step 1 tracer: one hardcoded, published, sellable coffin so we can
+        # prove the shop -> cart -> submit -> draft Order pipe end to end.
+        "data/tracer_coffin.xml",
+        # Step 1 checkout overrides: Submit-order button + Pending confirmation.
+        "views/checkout_templates.xml",
+        # Step 1.5: portal list shows submitted Orders with a Pending badge.
+        "views/portal_templates.xml",
+    ],
     # demo = data loaded ONLY when the DB is created with demo enabled (our dev
     # DB). Never loads in production. The demo company + portal users + sample
     # coffin land here in Step 3.

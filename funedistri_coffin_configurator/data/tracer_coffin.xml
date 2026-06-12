@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Step 1 (tracer spine): ONE hardcoded Coffin model.
+
+  WHY a hardcoded product instead of demo data?
+  - We need a real, sellable product on the website to prove the whole pipe
+    (shop -> cart -> submit -> draft Order) BEFORE we build the configurator.
+  - This lives in `data/` (always loaded), not `demo/`, so the tracer coffin
+    exists in every database during Step 1. It will be REPLACED by a proper,
+    attribute-driven Coffin model + demo seed in Step 3, so treat it as
+    scaffolding, not the final catalog.
+
+  noupdate="0" (the default): re-importing on `-u` keeps this record in sync
+  with the XML. Fine for a tracer we own; we are not protecting manual edits.
+-->
+<odoo>
+    <record id="product_tracer_coffin" model="product.template">
+        <!-- The catalog name shown in /shop. FR locale per CONTEXT.md. -->
+        <field name="name">Cercueil tracer (chêne)</field>
+
+        <!-- type='consu' = "Goods" (a tangible product). In Odoo v17+ the old
+             'product' (storable) type was removed; storability is now a
+             separate `is_storable` flag. We do not need stock tracking for the
+             tracer, so plain 'consu' is enough. -->
+        <field name="type">consu</field>
+
+        <!-- sale_ok = this product can be sold (appears as sellable). -->
+        <field name="sale_ok">True</field>
+
+        <!-- A non-zero base price so the line/cart has an amount to carry.
+             Prices get masked for Salesmen later (Step 6); for now it just
+             proves amounts flow through the pipe. -->
+        <field name="list_price">500.0</field>
+
+        <!-- is_published = visible on the website. website_sale reads this to
+             decide whether the product shows in /shop. Without it the coffin
+             exists in the backend but no B2B user can see or buy it. -->
+        <field name="is_published">True</field>
+    </record>
+</odoo>
