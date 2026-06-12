@@ -30,6 +30,13 @@ services:
       - ./:/mnt/extra-addons
       # Our config (addons path, DB creds) into the place Odoo reads by default.
       - ./odoo.conf:/etc/odoo/odoo.conf
+      # Odoo data dir = the FILESTORE (binary blobs for attachments + compiled
+      # assets). MUST be a named volume: without it each ephemeral `compose run`
+      # container has its own throwaway filestore, but the DB (on pgdata) keeps
+      # the attachment rows — so after a restart the rows point at blob files
+      # that no longer exist → FileNotFoundError 500s on /web/assets/*.
+      - odoo-data:/var/lib/odoo
 
 volumes:
   pgdata:
+  odoo-data:

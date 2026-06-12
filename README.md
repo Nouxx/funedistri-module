@@ -26,19 +26,37 @@ A B2B user never logs into the backend; the Owner never shops on the frontend.
 Keeping these mentally separate is the single most important thing — the same
 order shows up on both, but with different labels and different powers.
 
-> **Scope note.** What follows describes the workflow **as built today (Step 1 —
-> the "tracer spine")**. It is deliberately thin: one hard-coded coffin, no
-> roles yet, no price hiding yet, no configurable options yet. Those land in
-> later steps (see [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)).
-> The end-to-end *pipe* below is real and final; the *features* hanging off it
-> are not all there yet.
+> **Scope note.** What follows describes the workflow **as built today (Steps 1–2)**.
+> It is deliberately thin: one hard-coded coffin, no configurable options yet, and
+> — importantly — **B2B roles exist but price-hiding does not yet** (the masking
+> sweep is a later step). So today a Salesman still *sees* prices; the role is
+> wired, the suppression is not. Those land in later steps (see
+> [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)). The end-to-end
+> *pipe* below is real and final; the *features* hanging off it are not all there yet.
+
+### Setup: the Owner assigns B2B roles (backend)
+
+Before a B2B user shops, the Owner gives them a role on their **contact**
+(`/odoo` → Contacts → open the contact → **B2B role** dropdown):
+
+| Role | Places orders | Sees prices |
+| ---- | ------------- | ----------- |
+| **Salesman** | yes, on behalf of their company | **no** (once masking ships) |
+| **Store owner** | yes | **yes** |
+
+Picking the role flips one dropdown; behind the scenes the module keeps a hidden
+security group in sync on that contact's login user(s). Every later price-hiding
+branch reads that group via `has_group(...)` — so the dropdown is the single
+control, the groups are the plumbing. Leave the field empty for a company record
+or a contact who never logs in.
 
 ### B2B user point of view (frontend)
 
 The buyer. Logs into the **website only**.
 
-1. **Log in** at `/web/login` as a portal user (e.g. the test user `b2b_test` /
-   `b2b_test`, created for local clicking).
+1. **Log in** at `/web/login` as a portal user. Two test users exist for local
+   clicking: `b2b_owner` / `b2b_owner` (**Store owner**, sees prices) and
+   `b2b_salesman` / `b2b_salesman` (**Salesman**).
 2. **Browse the shop** at `/shop` — sees the published coffin(s).
 3. **Build + add to cart.** (Today: one tracer coffin with a fixed price. Later:
    pick wood / handles / engraving / dates — the actual configurator.)
@@ -48,7 +66,8 @@ The buyer. Logs into the **website only**.
    There is **no online payment**: clicking it submits the order and stops.
 6. **Confirmation.** Lands on **"Commande reçue — en attente de validation"**.
 7. **Track it.** At `/my/orders` the order appears with a **"En attente de
-   validation"** badge. (Later, for a Salesman, every price here is hidden.)
+   validation"** badge. (Once masking ships, a Salesman sees no price here; a
+   Store owner always does.)
 
 Behind the scenes, the cart *is* a draft `sale.order`; submitting just marks it
 submitted and detaches it from the live cart — it stays in `draft`, which is our
@@ -74,10 +93,11 @@ The single admin running Funedistri. Logs into the **backend only** (`/odoo`,
 4. **Ship.** Handled informally for now — out of scope as a tracked state.
 
 > **What is NOT here yet (later steps):** the Owner being *notified* on each
-> submit (activity + email), the price being *hidden* from Salesmen across every
-> surface, the two B2B roles, the real attribute-driven configurator, and the
-> conditional reveal fields. Step 1 only proves: shop → submit → a draft order
-> the Owner can see and confirm.
+> submit (activity + email), the price actually being *hidden* from Salesmen
+> across every surface (roles are wired, suppression is not), the real
+> attribute-driven configurator, and the conditional reveal fields. Steps 1–2
+> prove: shop → submit → a draft order the Owner sees and confirms, with B2B
+> roles assignable on contacts.
 
 ### The same order, two views
 

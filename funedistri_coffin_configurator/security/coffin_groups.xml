@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Step 2.1 — the two B2B role security groups.
+
+  WHY groups (and not just read the b2b_role field directly)?
+  Price-hiding branches everywhere (QWeb templates, JSON controllers) will ask
+  `request.env.user.has_group('...salesman...')`. has_group is the idiomatic,
+  cache-friendly check and works the same in Python and templates. So the role
+  the Owner picks on a contact (the b2b_role field) is SYNCED onto these groups
+  for the linked user(s) — see models/res_partner.py.
+
+  WHY no privilege_id?
+  v19 groups the Settings access-rights matrix by `privilege_id`. We deliberately
+  leave it unset: a group with no privilege does not appear in that matrix, so
+  the Owner never toggles these by hand. They are driven entirely by the b2b_role
+  dropdown — a stray manual toggle would desync from the field. (Pre-19 this was
+  done via category_id = base.module_category_hidden, now removed.)
+-->
+<odoo>
+    <!-- noupdate so re-installs/upgrades never reset these group records (and
+         the memberships Odoo stores against them). -->
+    <data noupdate="1">
+
+        <record id="coffin_salesman_group" model="res.groups">
+            <field name="name">Coffin: Salesman (no prices)</field>
+        </record>
+
+        <record id="coffin_store_owner_group" model="res.groups">
+            <field name="name">Coffin: Store owner (sees prices)</field>
+        </record>
+
+    </data>
+</odoo>

@@ -25,9 +25,14 @@
     "depends": [
         "website_sale",  # the e-commerce frontend B2B users shop on
         "sale",          # sale.order / sale.order.line — the Order backbone
+        "contacts",      # Contacts app — where the Owner sets each B2B user's
+                         # b2b_role on their res.partner (Step 2)
     ],
     # data = files (XML/CSV) loaded on install/update, in this order.
     "data": [
+        # Step 2 roles: hidden security groups. Load FIRST — other records and
+        # the field->group sync reference them by xmlid.
+        "security/coffin_groups.xml",
         # Step 1 tracer: one hardcoded, published, sellable coffin so we can
         # prove the shop -> cart -> submit -> draft Order pipe end to end.
         "data/tracer_coffin.xml",
@@ -35,6 +40,8 @@
         "views/checkout_templates.xml",
         # Step 1.5: portal list shows submitted Orders with a Pending badge.
         "views/portal_templates.xml",
+        # Step 2.4: b2b_role dropdown on the contact form (backend).
+        "views/res_partner_views.xml",
     ],
     # demo = data loaded ONLY when the DB is created with demo enabled (our dev
     # DB). Never loads in production. The demo company + portal users + sample
