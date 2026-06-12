@@ -8,6 +8,21 @@ UI locale = **French** (site sells in euros; user-facing labels/tooltips in FR).
 
 ## Language
 
+### Surfaces
+
+**Public website** (landing):
+The anonymous-visible marketing site presenting Funedistri. Owner may publish a
+public catalog here at his discretion — **marketing only**, decoupled from Coffin
+models. Has no configurator, no roles, no order flow.
+_Avoid_: shop, site (bare)
+
+**Protected configurator**:
+The login-gated section where approved B2B users build and submit coffins. Holds
+the whole shopping flow, roles, price-hiding and Orders. A logged-out visitor
+sees none of it. Coffin models live **only** here — never published to the
+Public website (publishing one would leak its price from the public door).
+_Avoid_: shop (bare), B2B site, member area
+
 ### Actors
 
 **Funedistri**:
