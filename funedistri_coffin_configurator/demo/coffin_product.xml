@@ -36,6 +36,14 @@
                    eval="[Command.set([ref('attr_handles_standard'), ref('attr_handles_gold')])]"/>
         </record>
 
+        <!-- Gravure option on the coffin: the trigger for the reveal rules. -->
+        <record id="coffin_demo_line_engraving" model="product.template.attribute.line">
+            <field name="product_tmpl_id" ref="coffin_demo"/>
+            <field name="attribute_id" ref="attr_engraving"/>
+            <field name="value_ids"
+                   eval="[Command.set([ref('attr_engraving_no'), ref('attr_engraving_yes')])]"/>
+        </record>
+
         <!-- price_extra lives on the auto-created PTAVs, which have no xmlid of
              their own. Odoo's own demo solves this by registering xmlids onto
              them via ir.model.data._update_xmlids, indexing product_template_

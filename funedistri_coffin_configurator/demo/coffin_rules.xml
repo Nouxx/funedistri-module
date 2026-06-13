@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Step 4.4 — demo conditional-reveal rules.
+
+  Choosing Gravure = "Oui" reveals AND requires the death date and the engraving
+  text. These rows are the single source of truth: the product page renders them,
+  the JS obeys them, and the server validates required-when against them.
+
+  Trigger = the GLOBAL attribute value attr_engraving_yes (not the per-coffin
+  PTAV), so the rule applies on any coffin offering Gravure.
+-->
+<odoo>
+    <data noupdate="1">
+
+        <record id="rule_engraving_requires_death_date" model="coffin.config.rule">
+            <field name="trigger_value_id" ref="attr_engraving_yes"/>
+            <field name="target_field">death_date</field>
+            <field name="required_when">True</field>
+        </record>
+
+        <record id="rule_engraving_requires_text" model="coffin.config.rule">
+            <field name="trigger_value_id" ref="attr_engraving_yes"/>
+            <field name="target_field">engraving_text</field>
+            <field name="required_when">True</field>
+        </record>
+
+    </data>
+</odoo>

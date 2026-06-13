@@ -26,12 +26,12 @@ A B2B user never logs into the backend; the Owner never shops on the frontend.
 Keeping these mentally separate is the single most important thing — the same
 order shows up on both, but with different labels and different powers.
 
-> **Scope note.** What follows describes the workflow **as built today (Steps 1–2)**.
-> It is deliberately thin: one hard-coded coffin, no configurable options yet, and
-> — importantly — **B2B roles exist but price-hiding does not yet** (the masking
+> **Scope note.** What follows describes the workflow **as built today (Steps 1–4)**.
+> There's a configurable coffin, priced options, and conditional-reveal fields.
+> The one big gap: **B2B roles exist but price-hiding does not yet** (the masking
 > sweep is a later step). So today a Salesman still *sees* prices; the role is
-> wired, the suppression is not. Those land in later steps (see
-> [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)). The end-to-end
+> wired, the suppression is not. Remaining work (masking, owner notifications) is
+> in [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md). The end-to-end
 > *pipe* below is real and final; the *features* hanging off it are not all there yet.
 
 ### Setup: the Owner assigns B2B roles (backend)
@@ -59,16 +59,20 @@ The buyer. Logs into the **website only**.
    history: `demo_store_owner` / `demo_store_owner` (**Store owner**, sees prices)
    and `demo_salesman` / `demo_salesman` (**Salesman**).
 2. **Browse the shop** at `/shop` — sees the published coffin(s).
-3. **Build + add to cart.** The demo **Cercueil configurable** offers two priced
-   Options: **Bois** (Chêne +0 / Contreplaqué +120, image picker) and **Poignées**
-   (Standard +0 / Dorées +80). Base 600 €. (Engraving / dates + conditional
-   reveal come in Step 4.)
-4. **Checkout.** Goes through the address step (the test user already has a
+3. **Build + add to cart.** The demo **Cercueil configurable** offers priced
+   Options: **Bois** (Chêne +0 / Contreplaqué +120, image picker), **Poignées**
+   (Standard +0 / Dorées +80), and **Gravure** (Oui/Non, unpriced). Base 600 €.
+4. **Fill conditional fields on the cart.** On the cart page, choosing
+   **Gravure = Oui** reveals — and requires — **Date de décès** and **Texte de
+   gravure** (≤20 chars). **Date de livraison** is always shown, optional. These
+   live on the order line; see "Conditional reveal" below.
+5. **Checkout.** Goes through the address step (the test user already has a
    complete French address, required or checkout blocks).
-5. **Submit.** The final button is **"Valider la commande"** — *not* "Pay now".
-   There is **no online payment**: clicking it submits the order and stops.
-6. **Confirmation.** Lands on **"Commande reçue — en attente de validation"**.
-7. **Track it.** At `/my/orders` the order appears with a **"En attente de
+6. **Submit.** The final button is **"Valider la commande"** — *not* "Pay now".
+   There is **no online payment**: clicking it submits the order and stops. If a
+   required revealed field is missing, the server refuses the submit.
+7. **Confirmation.** Lands on **"Commande reçue — en attente de validation"**.
+8. **Track it.** At `/my/orders` the order appears with a **"En attente de
    validation"** badge. (Once masking ships, a Salesman sees no price here; a
    Store owner always does.)
 
@@ -183,6 +187,38 @@ Consequences:
   (a `data`/`demo` XML record). In real production, though, the Owner's
   UI-created catalog lives in the prod DB and is the source of truth — the XML
   here is dev scaffolding only.
+
+## Conditional reveal (death date / engraving)
+
+Some fields only make sense for some choices: pick **Gravure = Oui** and you must
+give a **Date de décès** and a **Texte de gravure**; pick **Non** and neither
+applies. This one-level "pick X → reveal/require Y" logic is **not native** Odoo,
+so it's a thin custom layer (see [`docs/adr/0002`](docs/adr/0002-dedicated-model-for-conditional-reveal-rules.md)).
+
+**One source of truth: the `coffin.config.rule` model.** Each row is
+`(trigger value, target field, required when)` — e.g. *(Gravure: Oui, death_date,
+required)*. The trigger is a native attribute value (so the Owner manages the
+option in the Attributes & Variants tab); the target is one of the custom fields
+on `sale.order.line` (`death_date`, `delivery_date`, `engraving_text`).
+
+Three readers consume those same rows — nothing is duplicated:
+
+1. The **cart page** renders the rules into DOM `data-*` attributes.
+2. A small **generic JS** (`static/src/js/coffin_cart_fields.js`) reads the
+   `data-*` and shows/hides each field. It contains no rules of its own.
+3. The **server** reads the same rows to **validate** at submit
+   (`sale.order.line._validate_reveal_rules`) — a Salesman builds blind to price
+   and JS is only UX, so a missing *required* field is refused server-side. The
+   ≤20-char engraving limit is an `@api.constrains`, enforced on every write.
+
+Where you fill them: **on the cart page**, under each configured coffin. (ADR-0002
+originally said the product page; v19's product page is an OWL/JS configurator, so
+capture moved to the server-rendered cart — the rule mechanism is unchanged. See
+the ADR's Step 4 update.)
+
+Adding a new conditional field is a **dev** touch (new column on the line + an
+entry in the field list + the rule Selection); wiring an existing field to a
+trigger is **data only** (a new `coffin.config.rule` row the Owner could manage).
 
 ## Local dev setup
 

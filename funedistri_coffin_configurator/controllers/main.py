@@ -17,10 +17,15 @@ validation helper instead of re-implementing it.
 """
 
 from odoo import http
+from odoo.exceptions import ValidationError
 from odoo.http import request, route
 
 from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.addons.sale.controllers.portal import CustomerPortal
+
+from odoo.addons.funedistri_coffin_configurator.models.sale_order_line import (
+    COFFIN_CONFIG_FIELDS,
+)
 
 
 class CoffinWebsiteSale(WebsiteSale):
@@ -49,6 +54,12 @@ class CoffinWebsiteSale(WebsiteSale):
         # Make sure totals/taxes are up to date before we hand the order over.
         order_sudo._recompute_cart()
 
+        # Data-integrity gate (Step 4): enforce required-when reveal rules now,
+        # at submit. The JS reveal is UX only; a Salesman builds blind, so a
+        # missing required field (e.g. death date when engraving = yes) must be
+        # refused server-side before the Order becomes Pending.
+        order_sudo.order_line._validate_reveal_rules()
+
         # Mark this draft as a SUBMITTED Order (Pending), not a live cart. This
         # is what lets the portal list it as Pending without also showing carts.
         order_sudo.coffin_is_submitted = True
@@ -64,6 +75,37 @@ class CoffinWebsiteSale(WebsiteSale):
 
         # Land on the shared confirmation page (FR wording handled in 1.4).
         return request.redirect('/shop/confirmation')
+
+    @route('/coffin/cart/line/save', type='jsonrpc', auth='user', website=True)
+    def coffin_save_line_field(self, line_id, field, value, **kw):
+        """Persist one custom config field (death date / engraving / …) on a line.
+
+        Called by the cart-page JS when a field changes. Security: the line must
+        belong to the CURRENT user's cart, so a user can't write fields on someone
+        else's order. The ≤20-char constraint fires on write; we translate the
+        error into a message the JS shows inline.
+        """
+        # Whitelist the field name — never write an arbitrary field from the web.
+        allowed = {f['name'] for f in COFFIN_CONFIG_FIELDS}
+        if field not in allowed:
+            return {'error': "Champ inconnu."}
+
+        cart = request.cart
+        line = cart.order_line.filtered(lambda l: l.id == int(line_id))
+        if not line:
+            return {'error': "Ligne introuvable."}
+
+        try:
+            # Savepoint + flush so the ≤20-char constraint runs HERE and a bad
+            # write is rolled back. Without the savepoint, catching the error and
+            # returning normally would still COMMIT the invalid value.
+            with request.env.cr.savepoint():
+                # Empty string -> clear the field (False); Date/Char take the rest.
+                line.write({field: value or False})
+                line.flush_recordset()
+        except ValidationError as e:
+            return {'error': e.args[0] if e.args else "Valeur invalide."}
+        return {'ok': True}
 
 
 class CoffinCustomerPortal(CustomerPortal):

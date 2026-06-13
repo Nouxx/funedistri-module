@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Step 4.5 — capture the custom config fields on the cart, per Configured coffin.
+
+  ADR-0002 said "product page", but v19's product page is an OWL/JS configurator;
+  the cart page is server-rendered QWeb, so we capture here instead (the line and
+  its chosen options already exist). The reveal RULES are still the single source
+  of truth: we render them into data-* attributes and a small generic JS shows /
+  hides the fields. No rule is hard-coded in JS. The server validates
+  required-when at submit regardless.
+-->
+<odoo>
+    <template id="cart_lines_coffin_fields"
+              inherit_id="website_sale.cart_lines"
+              name="Coffin: per-line config fields">
+        <xpath expr="//div[hasclass('o_cart_product')]" position="inside">
+            <t t-set="coffin_specs" t-value="line._coffin_config_field_specs()"/>
+            <div t-if="coffin_specs"
+                 class="o_coffin_config_fields w-100 mt-2 ps-2 border-start"
+                 t-att-data-line-id="line.id"
+                 t-att-data-selected-value-ids="','.join(str(i) for i in line._selected_trigger_values().ids)">
+                <t t-foreach="coffin_specs" t-as="spec">
+                    <div class="o_coffin_field mb-2"
+                         t-att-data-field="spec['name']"
+                         t-att-data-trigger-value-ids="','.join(str(i) for i in spec['trigger_value_ids'])"
+                         t-att-data-required="'1' if spec['required'] else '0'"
+                         t-attf-style="#{'' if spec['revealed'] else 'display:none;'}">
+                        <label class="form-label mb-0 small">
+                            <t t-out="spec['label']"/><t t-if="spec['required']"><span class="text-danger"> *</span></t>
+                        </label>
+                        <input t-if="spec['widget'] == 'date'"
+                               type="date" class="form-control form-control-sm o_coffin_input"
+                               t-att-value="spec['value']"/>
+                        <input t-if="spec['widget'] == 'char'"
+                               type="text" class="form-control form-control-sm o_coffin_input"
+                               t-att-maxlength="spec.get('maxlength')"
+                               t-att-value="spec['value']"/>
+                        <small class="text-muted o_coffin_field_error d-none"/>
+                    </div>
+                </t>
+            </div>
+        </xpath>
+    </template>
+</odoo>
