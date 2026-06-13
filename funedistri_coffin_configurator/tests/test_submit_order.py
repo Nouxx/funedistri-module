@@ -25,10 +25,11 @@ class TestSubmitOrder(HttpCase):
     def setUpClass(cls):
         super().setUpClass()
 
-        # The tracer coffin loaded from data/tracer_coffin.xml. Its auto-created
-        # variant (product.product) is what actually goes on an order line.
+        # The demo configurable coffin (Step 3). Its auto-created variant
+        # (product.product) is what actually goes on an order line. Demo data is
+        # loaded in test DBs, so the xmlid resolves here.
         cls.coffin = cls.env.ref(
-            'funedistri_coffin_configurator.product_tracer_coffin'
+            'funedistri_coffin_configurator.coffin_demo'
         )
         cls.coffin_variant = cls.coffin.product_variant_id
 
@@ -116,4 +117,28 @@ class TestSubmitOrder(HttpCase):
         self.assertIn(
             order.name, my_orders,
             "Submitted Pending Order must appear in /my/orders",
+        )
+
+        # Regression: the submitted Order must NOT be resurrected as the cart.
+        # Adding a product after submit starts a BRAND-NEW cart, leaving the
+        # Pending order untouched. (Odoo would otherwise revive the draft as an
+        # "abandoned cart" — making checkout look like it never emptied.)
+        self.make_jsonrpc_request('/shop/cart/add', {
+            'product_template_id': self.coffin.id,
+            'product_id': self.coffin_variant.id,
+            'quantity': 1,
+        })
+        orders_now = self.env['sale.order'].search([
+            ('partner_id', '=', self.portal_user.partner_id.id),
+        ])
+        self.assertEqual(len(orders_now), 2, "A fresh cart should be created")
+        new_cart = orders_now - order
+        self.assertFalse(
+            new_cart.coffin_is_submitted,
+            "The new cart must be a plain cart, not the submitted Order",
+        )
+        order.invalidate_recordset()
+        self.assertTrue(
+            order.coffin_is_submitted,
+            "The submitted Order must stay submitted (not reused as a cart)",
         )

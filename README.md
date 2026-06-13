@@ -54,12 +54,15 @@ or a contact who never logs in.
 
 The buyer. Logs into the **website only**.
 
-1. **Log in** at `/web/login` as a portal user. Two test users exist for local
-   clicking: `b2b_owner` / `b2b_owner` (**Store owner**, sees prices) and
-   `b2b_salesman` / `b2b_salesman` (**Salesman**).
+1. **Log in** at `/web/login` as a portal user. The demo seed (Step 3) ships two,
+   both under the same company **Pompes Funèbres Demo SARL** so they share order
+   history: `demo_store_owner` / `demo_store_owner` (**Store owner**, sees prices)
+   and `demo_salesman` / `demo_salesman` (**Salesman**).
 2. **Browse the shop** at `/shop` — sees the published coffin(s).
-3. **Build + add to cart.** (Today: one tracer coffin with a fixed price. Later:
-   pick wood / handles / engraving / dates — the actual configurator.)
+3. **Build + add to cart.** The demo **Cercueil configurable** offers two priced
+   Options: **Bois** (Chêne +0 / Contreplaqué +120, image picker) and **Poignées**
+   (Standard +0 / Dorées +80). Base 600 €. (Engraving / dates + conditional
+   reveal come in Step 4.)
 4. **Checkout.** Goes through the address step (the test user already has a
    complete French address, required or checkout blocks).
 5. **Submit.** The final button is **"Valider la commande"** — *not* "Pay now".
@@ -107,6 +110,80 @@ The single admin running Funedistri. Logs into the **backend only** (`/odoo`,
 | After Owner clicks Confirm | (state `sale`) "Validée" | a **Sales Order** |
 | Wording rule | never "quotation", never "paid" | native Odoo labels are fine |
 
+## How coffin options and prices are stored
+
+Options (wood, handles…) and their price add-ons use **native Odoo product
+attributes** — no custom tables. Four model layers, and the price lives on a
+specific one:
+
+| Layer | Model | Example | Holds the price? |
+| ----- | ----- | ------- | ---------------- |
+| Option | `product.attribute` | "Bois" | no |
+| Option value (global) | `product.attribute.value` | "Contreplaqué" | **no** |
+| Option on a coffin | `product.template.attribute.line` | Bois offered on *Cercueil configurable* | no |
+| Value on a coffin | `product.template.attribute.value` (**PTAV**) | Contreplaqué *on this coffin* | **yes → `price_extra`** |
+
+So **the +120 € for Contreplaqué is stored on the PTAV**, the per-coffin
+materialisation of the value — *not* on the global "Contreplaqué" value. Why:
+the same wood can cost differently on different coffins, so the price belongs to
+the (coffin × value) pair, not the value alone. The coffin's base `list_price`
+(600 €) plus each chosen value's `price_extra` is the configured price.
+
+Check it directly:
+
+```sql
+SELECT pa.name->>'en_US' AS option, pav.name->>'en_US' AS value, ptav.price_extra
+FROM product_template_attribute_value ptav
+JOIN product_attribute pa ON pa.id = ptav.attribute_id
+JOIN product_attribute_value pav ON pav.id = ptav.product_attribute_value_id
+JOIN product_template pt ON pt.id = ptav.product_tmpl_id
+WHERE pt.name->>'en_US' = 'Cercueil configurable';
+```
+
+Two more facts:
+
+- **No-variant mode.** The attributes are set to *Never* create variants
+  (`create_variant = 'no_variant'`), so Odoo does **not** explode the catalog
+  into one SKU per wood×handles combination. The chosen values are captured on
+  the **order line** instead (`product_no_variant_attribute_value_ids`), which is
+  why the price is computed per line rather than per stored variant.
+- **The Owner edits all of this in the UI — no code.** Both the option list and
+  the prices are owner self-serve in the backend: open the product → **Attributes
+  & Variants** tab → add/remove attributes and values there, and type each value's
+  add-on in the **Extra Price** column (the `price_extra` field, editable inline).
+- **Seeding the price in *demo* code is a one-off hack, unrelated to the Owner.**
+  A PTAV is auto-created by Odoo when you attach a value to a coffin, so it has no
+  XML id of its own. Demo XML loads at install with nobody to click, so to set
+  `price_extra` we register an id onto the PTAV via `ir.model.data._update_xmlids`
+  then write the price — see `demo/coffin_product.xml`. A human in the product
+  form never touches any of that.
+
+### Demo XML is a one-time seed, not a sync — UI edits live only in the DB
+
+This trips people up, so be explicit. Options you add in the **UI** and options
+that come from `demo/coffin_attributes.xml` end up in the **same DB tables**, but
+they are decoupled:
+
+| | From the demo XML | Added in the UI |
+| --- | --- | --- |
+| Stored in DB | yes | yes |
+| Has an `ir_model_data` **xml_id** | yes (`funedistri_coffin_configurator.attr_…`) | **no** — exists nowhere in code |
+| Survives `make reset` | yes (re-seeded on the fresh DB) | **no — gone** |
+| Exists in production | no (demo never loads in prod) | yes, persists in the prod DB |
+
+Consequences:
+
+- The demo file loads **once, at database creation** (`--with-demo`) and is
+  `noupdate="1"`, so a later module **upgrade does not touch** existing rows.
+  Editing the XML ≠ changing the DB; editing the DB (UI) ≠ changing the XML.
+- A value you add by hand (e.g. a new wood "Hêtre") is **real and persistent in
+  that DB**, but invisible to git and **wiped by `make reset`** — only the demo
+  seed comes back. Treat UI tinkering in the dev DB as throwaway.
+- To make an option **survive resets or ship to prod**, it must go into code
+  (a `data`/`demo` XML record). In real production, though, the Owner's
+  UI-created catalog lives in the prod DB and is the source of truth — the XML
+  here is dev scaffolding only.
+
 ## Local dev setup
 
 A throwaway Odoo 19 + Postgres 16 stack in Docker, so you can click the module
@@ -136,15 +213,24 @@ Then open <http://localhost:8069> and log in:
 | Password | `admin` |
 
 `make dev` boots Postgres, then runs Odoo in the **foreground** with
-`-i funedistri_coffin_configurator --dev=all`:
+`-i funedistri_coffin_configurator --with-demo --dev=all`:
 
 - `-i …` installs the module (and pulls `website_sale` + `sale` via the manifest
   `depends`); on a fresh database it also **creates** the database.
+- `--with-demo` loads the demo seed (configurable coffin + B2B users). **Odoo 19
+  made demo data opt-in** — without this flag, none of it is created. Demo loads
+  only at **database creation**, so to add it to a DB made without it you must
+  `make reset` first (see below).
 - `--dev=all` is developer mode: **hot-reload** of XML views and Python — edit a
   file, refresh the browser, no restart needed.
 
 Leave this terminal running; it streams the Odoo log. `Ctrl-C` stops Odoo (the
 Postgres container keeps running).
+
+> **Demo seed (dev only).** A fresh `make dev` gives you a clickable store:
+> the **Cercueil configurable** Coffin model (priced Bois / Poignées options)
+> and two B2B logins under one company — `demo_store_owner` and `demo_salesman`
+> (password = login). None of this loads in production.
 
 ## Make targets
 

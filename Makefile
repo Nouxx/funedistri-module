@@ -18,12 +18,20 @@ dev: ## Boot PG + Odoo, (re)install the module, hot-reload XML/Python.
 	#   -d $(DB)        → use/create this database
 	#   -i $(MODULE)    → install the module (pulls website_sale + sale via
 	#                     'depends'); on a fresh DB this also creates the DB.
+	#   --with-demo     → load demo data (v19 made demo OPT-IN; without this the
+	#                     demo coffin + B2B users are NOT seeded). Only affects a
+	#                     FRESH DB — demo loads at creation, so `make reset` first
+	#                     if an existing DB was created without it.
 	#   --dev=all       → developer mode: hot-reload of XML views and Python.
 	# --rm cleans up the one-off container; --service-ports exposes 8069.
 	docker compose run --rm --service-ports odoo \
-		odoo -d $(DB) -i $(MODULE) --dev=all
+		odoo -d $(DB) -i $(MODULE) --with-demo --dev=all
 
 down: ## Stop containers (Postgres data is kept in the named volume).
+	# `compose down` does NOT stop one-off `compose run` containers, so a
+	# foreground/detached Odoo (which uses `compose run`) lingers and keeps the
+	# network "in use". Remove any odoo:19 run containers first, then down.
+	-docker ps -aq --filter "ancestor=odoo:19" | xargs -r docker rm -f
 	docker compose down
 
 reset: ## Drop the dev database for a clean slate (keeps the PG server).

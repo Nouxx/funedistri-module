@@ -33,9 +33,6 @@
         # Step 2 roles: hidden security groups. Load FIRST — other records and
         # the field->group sync reference them by xmlid.
         "security/coffin_groups.xml",
-        # Step 1 tracer: one hardcoded, published, sellable coffin so we can
-        # prove the shop -> cart -> submit -> draft Order pipe end to end.
-        "data/tracer_coffin.xml",
         # Step 1 checkout overrides: Submit-order button + Pending confirmation.
         "views/checkout_templates.xml",
         # Step 1.5: portal list shows submitted Orders with a Pending badge.
@@ -44,9 +41,17 @@
         "views/res_partner_views.xml",
     ],
     # demo = data loaded ONLY when the DB is created with demo enabled (our dev
-    # DB). Never loads in production. The demo company + portal users + sample
-    # coffin land here in Step 3.
-    "demo": [],
+    # DB). Never loads in production. Order matters: attributes -> coffin (uses
+    # them) -> users.
+    "demo": [
+        # Step 3.1: native priced attributes (Bois / Poignées).
+        "demo/coffin_attributes.xml",
+        # Step 3.2: the configurable demo Coffin model wired to those attributes.
+        "demo/coffin_product.xml",
+        # Step 3.3: demo customer company + Store owner + Salesman (shared
+        # commercial_partner_id -> native company-scoped order visibility).
+        "demo/coffin_users.xml",
+    ],
     # application=False → this is a feature module, not a standalone "app" tile.
     "application": False,
     # installable=True → it shows up and can be installed.
