@@ -22,9 +22,13 @@ steps land (see `docs/IMPLEMENTATION_PLAN.md`).
 
 ## Features
 
-> Reset 2026-06-15 — the module is an empty shell. This table fills in as steps
-> land. Planned features and their order live in `docs/IMPLEMENTATION_PLAN.md`.
+> This table fills in as steps land. Planned features and their order live in
+> `docs/IMPLEMENTATION_PLAN.md`.
 
 | Feature | Models | Views | Controllers | Security / Data | JS/CSS | Tests | ADR | Step |
 |---|---|---|---|---|---|---|---|---|
-| _(none yet — scaffold only)_ | — | — | — | — | — | — | 0006 | 0 |
+| **Submit-order flow** (cart → Pending Order, owner notify, portal status) | `sale_order.py` (`coffin_is_submitted`, `_coffin_submit_as_pending`, `_coffin_notify_owner`) | `submit_order_templates.xml` (button + confirmation + portal badge) | `submit_order.py` (`shop_submit_order`, portal domain) | `data/mail_template_owner_order.xml` | — | `test_submit_order.py` | — | 1 |
+
+Dev seed (local only, in `funedistri_dev_seed`): `seed_coffin_attributes.xml` +
+`seed_coffin_product.xml` give a published, configurable "Cercueil Taica" to build
+and submit.

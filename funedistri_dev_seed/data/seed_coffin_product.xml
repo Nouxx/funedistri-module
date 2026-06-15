@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LOCAL DEV SEED — a sellable, published Coffin model ("Cercueil Taica").
+
+  seed_coffin_attributes.xml only defines the Options (attributes + values). On
+  its own that puts NOTHING in the shop. This file creates the actual
+  product.template, wires the Options onto it via attribute lines, and publishes
+  it — so every `make dev` gives a clickable, configurable coffin to build and
+  submit (the Step 1 tracer needs something real to configure).
+
+  In PRODUCTION the Owner builds this product by hand in the backend; it is dev
+  data only, hence it lives in the local-only seed module.
+
+  attribute_line_ids: each line links the template to one attribute and the set of
+  values offered for it. Command.create / Command.set are Odoo's x2many "ORM
+  commands"; ref('xmlid') resolves a seeded record to its DB id. Prices ride on the
+  values themselves (default_extra_price in seed_coffin_attributes.xml), so the
+  per-line price_extra defaults from there — no price wiring needed here.
+
+  noupdate="1" → created once; reseed = make reset + make dev.
+-->
+<odoo>
+    <data noupdate="1">
+
+        <record id="product_coffin_taica" model="product.template">
+            <field name="name">Cercueil Taica</field>
+            <!-- Base price before any Option extras. -->
+            <field name="list_price">500.0</field>
+            <!-- 'consu' = goods (a physical product) in Odoo 19. -->
+            <field name="type">consu</field>
+            <field name="sale_ok" eval="True"/>
+            <!-- Publish to the website so it shows in the shop. (Step 3 will gate
+                 the shop to logged-in B2B users; for the tracer it's just visible.) -->
+            <field name="is_published" eval="True"/>
+
+            <!-- Wire the Options. Each Command.create adds one attribute line with
+                 all of that attribute's values. The attributes are no_variant, so
+                 no SKU explosion — the choice is captured on the order line. -->
+            <field name="attribute_line_ids" eval="[
+                Command.create({
+                    'attribute_id': ref('attr_longueur'),
+                    'value_ids': [Command.set([
+                        ref('val_longueur_185'),
+                        ref('val_longueur_195'),
+                        ref('val_longueur_custom'),
+                    ])],
+                }),
+                Command.create({
+                    'attribute_id': ref('attr_largeur'),
+                    'value_ids': [Command.set([
+                        ref('val_largeur_55'),
+                        ref('val_largeur_94'),
+                        ref('val_largeur_custom'),
+                    ])],
+                }),
+                Command.create({
+                    'attribute_id': ref('attr_poignees'),
+                    'value_ids': [Command.set([
+                        ref('val_poignees_posees'),
+                        ref('val_poignees_non_posees'),
+                        ref('val_poignees_sans'),
+                    ])],
+                }),
+                Command.create({
+                    'attribute_id': ref('attr_embleme'),
+                    'value_ids': [Command.set([
+                        ref('val_embleme_sans'),
+                        ref('val_embleme_croix'),
+                        ref('val_embleme_croix_rose'),
+                    ])],
+                }),
+                Command.create({
+                    'attribute_id': ref('attr_plaque'),
+                    'value_ids': [Command.set([
+                        ref('val_plaque_sans'),
+                        ref('val_plaque_argent'),
+                        ref('val_plaque_or'),
+                    ])],
+                }),
+                Command.create({
+                    'attribute_id': ref('attr_urne'),
+                    'value_ids': [Command.set([
+                        ref('val_urne_sans'),
+                        ref('val_urne_blanche'),
+                        ref('val_urne_grise'),
+                    ])],
+                }),
+            ]"/>
+        </record>
+
+    </data>
+</odoo>

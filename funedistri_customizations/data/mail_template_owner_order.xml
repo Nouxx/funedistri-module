@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Owner-notification email (Step 1). A nudge sent to the Owner when a B2B user
+  submits an Order, so they come to the backend and Validate it. The durable
+  guarantee is the mail.activity (see models/sale_order.py); this email is the
+  "come look" reminder.
+
+  noupdate="0" (default): so edits to the template re-load on module update.
+  Modern Odoo templates: subject/email_to use inline {{ }} expressions; body_html
+  uses QWeb (t-out). Recipient = the order's salesperson (the Owner in this
+  single-owner setup); refined when Step 2 adds roles.
+-->
+<odoo>
+
+    <record id="mail_template_owner_order_submitted" model="mail.template">
+        <field name="name">Funedistri: Owner — new Order to validate</field>
+        <!-- The model this template renders against. sale.model_sale_order is the
+             xmlid of the ir.model record for sale.order. -->
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="subject">Nouvelle commande à valider : {{ object.name }}</field>
+        <!-- Email the salesperson (the Owner here). Empty if none set → no send. -->
+        <field name="email_to">{{ object.user_id.email or '' }}</field>
+        <field name="body_html" type="html">
+            <div style="margin:0;padding:0;">
+                <p>Bonjour,</p>
+                <p>
+                    Une nouvelle commande
+                    (<t t-out="object.name">S00001</t>) a été soumise par
+                    <t t-out="object.partner_id.name">Client</t>
+                    et attend votre validation.
+                </p>
+                <p>Connectez-vous au backend pour la consulter et la valider.</p>
+            </div>
+        </field>
+        <!-- auto_delete: remove the mail.mail record after sending (keeps the queue
+             tidy; the Order's chatter still logs that it was sent). -->
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+</odoo>

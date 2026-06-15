@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Submit-order flow — frontend template patches (Step 1, tracer spine).
+
+  All three are QWeb template INHERITANCES: we don't copy Odoo's templates, we
+  surgically patch them with <xpath>, so future Odoo updates to the originals
+  still flow through.
+    A) payment step  -> a single "Valider la commande" submit (no online payment)
+    B) confirmation  -> FR "Commande reçue — en attente de validation"
+    C) portal list   -> a status column (Pending / Validée badge)
+-->
+<odoo>
+
+    <!-- A) Payment step becomes a no-payment "Submit order" step. The cart is
+         already a draft sale.order; submitting just hands it over as Pending. So
+         we strip the payment providers and POST our own button to the controller. -->
+    <template id="payment_submit_order"
+              inherit_id="website_sale.payment"
+              name="Coffin: Submit order (no online payment)">
+
+        <!-- Tell the shared navigation_buttons template to hide the native
+             pay/confirm button + the "or" divider (the stock payment template
+             uses this very flag for the same purpose). -->
+        <xpath expr="//t[@t-set='redirect']" position="after">
+            <t t-set="hide_payment_button" t-value="True"/>
+        </xpath>
+
+        <!-- Remove the payment-provider widget entirely (no Stripe/etc.). We keep
+             the surrounding div so its paired t-else stays valid; we only empty it. -->
+        <xpath expr="//div[@id='payment_method']" position="replace">
+            <t/>
+        </xpath>
+
+        <!-- Our own submit button: a plain POST form to the Step 1 controller.
+             csrf_token is required because the route is a state-changing POST. -->
+        <xpath expr="//div[@id='address_on_payment']" position="before">
+            <form action="/shop/submit_order" method="post"
+                  class="mb-3" name="coffin_submit_order">
+                <input type="hidden" name="csrf_token"
+                       t-att-value="request.csrf_token()"/>
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    Valider la commande
+                </button>
+            </form>
+        </xpath>
+    </template>
+
+    <!-- B) Confirmation page: clear FR "pending validation" message. Odoo's native
+         "Thank you for your order" heading is gated on a payment transaction
+         (which flow A never creates), so it stays hidden; we add our own.
+         CONTEXT.md wording: never "paid", never "quotation" — the Order is Pending. -->
+    <template id="confirmation_pending"
+              inherit_id="website_sale.confirmation"
+              name="Coffin: Pending-validation confirmation">
+        <xpath expr="//div[@id='order_name']" position="before">
+            <div class="alert alert-success mt-3" role="status"
+                 name="coffin_order_received">
+                <h3 class="mb-1">Commande reçue</h3>
+                <p class="mb-0">Votre commande est en attente de validation.</p>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- C) Portal list: show each Order's state, so a submitted Order reads
+         "En attente de validation" (Pending), never "Quotation". Pairs with the
+         _prepare_orders_domain override that makes submitted drafts appear at all. -->
+    <template id="portal_my_orders_status"
+              inherit_id="sale.portal_my_orders"
+              name="Coffin: Pending status column">
+
+        <!-- Header: a "Statut" column after the Total column. -->
+        <xpath expr="//th[@name='order_total']" position="after">
+            <th class="text-end">Statut</th>
+        </xpath>
+
+        <!-- Row: a badge per order. Pending = draft + submitted; Validée = 'sale'. -->
+        <xpath expr="//td[@name='order_amount_total']" position="after">
+            <td class="text-end">
+                <span t-if="order.state == 'sale'"
+                      class="badge rounded-pill text-bg-success">Validée</span>
+                <span t-elif="order.state == 'draft' and order.coffin_is_submitted"
+                      class="badge rounded-pill text-bg-warning">En attente de validation</span>
+            </td>
+        </xpath>
+    </template>
+
+</odoo>

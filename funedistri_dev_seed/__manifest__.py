@@ -41,6 +41,10 @@
         # Coffin Options (native attributes + values + extra prices), captured
         # from the Owner's hand-built config so the configurator rebuilds itself.
         "data/seed_coffin_attributes.xml",
+        # A published, configurable Coffin model wired to those Options, so the
+        # shop has a real coffin to build + submit. Loads AFTER the attributes it
+        # references.
+        "data/seed_coffin_product.xml",
         # NOTE: test B2B companies + users (seed_b2b_users.xml) were removed at the
         # 2026-06-15 reset — they set b2b_role, a field the main module no longer
         # defines. Restore this seed when step 2 (Roles foundation) re-adds b2b_role.

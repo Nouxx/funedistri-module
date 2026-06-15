@@ -30,8 +30,15 @@
         "sale_management",  # the user-facing "Sales" BACKEND APP (menus/views)
         "contacts",         # Contacts app — where the Owner sets b2b_role (step 2)
     ],
-    # data/assets are EMPTY at the reset. Steps fill them in as features land.
-    "data": [],
+    # data = XML/CSV loaded on install/update, in order. Grouped per feature.
+    "data": [
+        # --- Submit-order flow (Step 1) ---
+        # Owner-notification email template. Load before anything that references
+        # it; the model looks it up by xmlid at submit time.
+        "data/mail_template_owner_order.xml",
+        # Submit button + Pending confirmation + portal status badge.
+        "views/submit_order_templates.xml",
+    ],
     "assets": {},
     # NO demo data. Local dev test records live in the separate, local-only
     # funedistri_dev_seed module (installed by `make dev`, never on prod).
