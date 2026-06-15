@@ -150,40 +150,53 @@
             <field name="image">iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR4nGM4saqCJMQwqmFUw/DVAADPAuoQq2r+KgAAAABJRU5ErkJggg==</field>
         </record>
 
-        <!-- ===== Gravure plaque — THREE separate single-value radio attributes
-             exactly as configured in the DB (attr ids 6/7/8). This is unusual
-             (normally one attribute with three values); kept faithful to what
-             the Owner built. Flag for review if it was unintentional. ===== -->
+        <!-- ===== Gravure plaque — THREE FREE-TEXT fields (Nom, naissance, décès).
+             FIX (2026-06-15): these were three degenerate single-choice radios that
+             captured nothing. They are now native FREE-TEXT inputs: each attribute
+             has ONE value flagged is_custom=True, so Odoo shows a free-text box when
+             that value is selected. With a single value it auto-selects → the box is
+             always shown → an always-visible text input the B2B user fills with what
+             to engrave. The text is captured on the order line
+             (product_custom_attribute_value_ids), per ADR 0004 (native attributes only).
+
+             ⚠️ "Force the user to provide it" is NOT achievable natively: an is_custom
+             box can be left empty (native has no required-when — ADR 0004). The Owner
+             is the backstop and fills/corrects the engraving at Validate. If a hard
+             "required" ever becomes essential, that's the post-v1 reveal-layer revival
+             discussed in ADR 0004. ===== -->
         <record id="attr_gravure_nom" model="product.attribute">
-            <field name="name">Gravure plaque</field>
+            <field name="name">Gravure plaque — Nom</field>
             <field name="display_type">radio</field>
             <field name="create_variant">no_variant</field>
         </record>
         <record id="val_gravure_nom" model="product.attribute.value">
-            <field name="name">Nom</field>
+            <field name="name">Nom à graver</field>
             <field name="attribute_id" ref="attr_gravure_nom"/>
+            <field name="is_custom" eval="True"/>
             <field name="sequence">0</field>
         </record>
 
         <record id="attr_gravure_naissance" model="product.attribute">
-            <field name="name">Gravure plaque</field>
+            <field name="name">Gravure plaque — Année de naissance</field>
             <field name="display_type">radio</field>
             <field name="create_variant">no_variant</field>
         </record>
         <record id="val_gravure_naissance" model="product.attribute.value">
             <field name="name">Année de naissance</field>
             <field name="attribute_id" ref="attr_gravure_naissance"/>
+            <field name="is_custom" eval="True"/>
             <field name="sequence">0</field>
         </record>
 
         <record id="attr_gravure_deces" model="product.attribute">
-            <field name="name">Gravure plaque</field>
+            <field name="name">Gravure plaque — Année de décès</field>
             <field name="display_type">radio</field>
             <field name="create_variant">no_variant</field>
         </record>
         <record id="val_gravure_deces" model="product.attribute.value">
             <field name="name">Année de décès</field>
             <field name="attribute_id" ref="attr_gravure_deces"/>
+            <field name="is_custom" eval="True"/>
             <field name="sequence">0</field>
         </record>
 
@@ -213,39 +226,43 @@
             <field name="image">iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR4nGM4saqCJMQwqmFUw/DVAADPAuoQq2r+KgAAAABJRU5ErkJggg==</field>
         </record>
 
-        <!-- ===== Personalisation urne — THREE separate single-value radio
-             attributes as configured (attr ids 10/11/12). Same faithful-capture
-             note as "Gravure plaque" above. ===== -->
+        <!-- ===== Personalisation urne — THREE FREE-TEXT fields (Prénom, Année,
+             Crématorium). Same fix + same caveat as "Gravure plaque" above: each is
+             a single is_custom value → an always-shown free-text box; not natively
+             required (Owner is the backstop at Validate). ===== -->
         <record id="attr_perso_prenom" model="product.attribute">
-            <field name="name">Personalisation urne</field>
+            <field name="name">Personalisation urne — Prénom</field>
             <field name="display_type">radio</field>
             <field name="create_variant">no_variant</field>
         </record>
         <record id="val_perso_prenom" model="product.attribute.value">
             <field name="name">Prénom</field>
             <field name="attribute_id" ref="attr_perso_prenom"/>
+            <field name="is_custom" eval="True"/>
             <field name="sequence">0</field>
         </record>
 
         <record id="attr_perso_annee" model="product.attribute">
-            <field name="name">Personalisation urne</field>
+            <field name="name">Personalisation urne — Année</field>
             <field name="display_type">radio</field>
             <field name="create_variant">no_variant</field>
         </record>
         <record id="val_perso_annee" model="product.attribute.value">
             <field name="name">Année</field>
             <field name="attribute_id" ref="attr_perso_annee"/>
+            <field name="is_custom" eval="True"/>
             <field name="sequence">0</field>
         </record>
 
         <record id="attr_perso_crematorium" model="product.attribute">
-            <field name="name">Personalisation urne</field>
+            <field name="name">Personalisation urne — Crématorium</field>
             <field name="display_type">radio</field>
             <field name="create_variant">no_variant</field>
         </record>
         <record id="val_perso_crematorium" model="product.attribute.value">
             <field name="name">Crématorium</field>
             <field name="attribute_id" ref="attr_perso_crematorium"/>
+            <field name="is_custom" eval="True"/>
             <field name="sequence">0</field>
         </record>
 

@@ -85,6 +85,30 @@
                         ref('val_urne_grise'),
                     ])],
                 }),
+                Command.create({
+                    'attribute_id': ref('attr_gravure_nom'),
+                    'value_ids': [Command.set([ref('val_gravure_nom')])],
+                }),
+                Command.create({
+                    'attribute_id': ref('attr_gravure_naissance'),
+                    'value_ids': [Command.set([ref('val_gravure_naissance')])],
+                }),
+                Command.create({
+                    'attribute_id': ref('attr_gravure_deces'),
+                    'value_ids': [Command.set([ref('val_gravure_deces')])],
+                }),
+                Command.create({
+                    'attribute_id': ref('attr_perso_prenom'),
+                    'value_ids': [Command.set([ref('val_perso_prenom')])],
+                }),
+                Command.create({
+                    'attribute_id': ref('attr_perso_annee'),
+                    'value_ids': [Command.set([ref('val_perso_annee')])],
+                }),
+                Command.create({
+                    'attribute_id': ref('attr_perso_crematorium'),
+                    'value_ids': [Command.set([ref('val_perso_crematorium')])],
+                }),
             ]"/>
         </record>
 
