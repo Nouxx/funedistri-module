@@ -4,7 +4,8 @@ Date: 2026-06-14
 
 ## Status
 
-Accepted (supersedes [ADR 0002](./0002-dedicated-model-for-conditional-reveal-rules.md))
+Accepted (supersedes [ADR 0002](./0002-dedicated-model-for-conditional-reveal-rules.md)).
+**Reaffirmed 2026-06-15** — see "Reaffirmation" below.
 
 ## Context
 
@@ -63,3 +64,21 @@ is no conditional reveal.** The entire custom config layer is removed.
 - Glossary terms **Death date**, **Delivery date**, **Engraving text** now denote
   free-text option values, not typed/validated fields; **Reveal rule** is retired
   for v1. CONTEXT.md updated accordingly.
+
+## Reaffirmation (2026-06-15)
+
+After this ADR was accepted, `new-context.md` re-opened conditional reveal (the
+"plaque chosen → plaque name must be provided" example), arguing always-visible
+fields are nonsensical UX. We grilled it and **rejected the re-open**: coffin
+configuration is done **exclusively with native Product Attributes, with no
+conditional reveal**, full stop for v1. The plaque-name contradiction is accepted
+and handled by the Owner at Validate, exactly as this ADR's "single validation
+backstop" already states.
+
+Note for whoever revives reveal post-v1: the want had **shifted** since ADR 0002.
+0002 designed reveal over **custom** line fields; the re-open wanted reveal over
+**native** attribute data. Native `is_custom` values give "same-value reveal" for
+free (mark a value `is_custom` → a text box appears when it's picked), but never
+*required* and never *cross-attribute* (e.g. engraving=yes → a separate death-date
+field). Those two gaps are the only things a custom layer would buy — weigh them
+against the upgrade-risk cost before reviving.

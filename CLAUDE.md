@@ -18,6 +18,7 @@ The detailed, resolved design is under **Design decisions** below.
 # Guidelines
 
 - ALWAYS explain in comments what the code does and WHY. I'm new to Python and Odoo, so I need this information.
+- **One module, organised by feature.** All features live in `funedistri_coffin_configurator` (NOT split into separate modules — see ADR 0006). Inside it, prefer one file per feature within each Odoo layer folder. The feature→files map is `docs/FEATURE_MAP.md` — keep it current when adding/moving a feature.
 
 # Terminology / Naming rules
 
@@ -40,9 +41,9 @@ The detailed, resolved design is under **Design decisions** below.
 | Options (the choices) | `product.attribute` + `product.attribute.value` | linked to template via `product.template.attribute.line` |
 | Option price | `product.template.attribute.value.price_extra` | |
 | Configured coffin | `sale.order.line` | carries `product_no_variant_attribute_value_ids` + `product_custom_attribute_value_ids` |
-| Engraving text | **custom `engraving_text` Char on `sale.order.line`** | Step 4 chose a custom field (not native `product.attribute.custom.value`) so it shares the generic conditional-reveal + backend-view plumbing with the dates; ≤20-char `@api.constrains` |
-| Death date / Delivery date | custom `death_date` / `delivery_date` Date on `sale.order.line` | no native model |
-| Backend visibility of the above | `views/sale_order_views.xml` inherits `sale.view_order_form` | Step 4.7: the three custom line fields are columns on the order-line list, else the Owner sees only the line description and not what was captured |
+| Engraving text | native **`product.attribute.custom.value`** (an `is_custom` attribute value) | v1: free text on the line, NO length limit; Owner trims at Validate. No custom field. (ADR 0004) |
+| Death date / Delivery date | native **`product.attribute.custom.value`** (free text) | v1: free-text `is_custom` values, NOT typed Date fields, NO validation. Owner reads/corrects at Validate. (ADR 0004) |
+| Backend visibility of the above | native | `is_custom` values show on the order line natively — no inherited view needed. The retired custom-field columns in `views/sale_order_views.xml` are removed. |
 | Order | `sale.order` | |
 | **Pending** state | `sale.order.state = 'draft'` | Odoo label "Quotation"; we never say "quotation" |
 | Owner **Validates** | `sale.order.action_confirm()` → `state = 'sale'` | we skip the `'sent'` state — never email a quote to a price-blind salesman |
@@ -60,27 +61,19 @@ The detailed, resolved design is under **Design decisions** below.
 - **Odoo version: prod (funedistri.odoo.com on Odoo.sh) = 19.2; local dev image `odoo:19` reports series 19.0** (verified at Step 0 scaffold, 2026-06-10). The community `odoo:19` image is the 19.0 generation — local does NOT mirror prod at the series level.
   - **Manifest version = short form `1.0.0`** (NOT `19.x.*`). A series-prefixed version that mismatches the running server makes Odoo set `installable=False` ("incompatible version"). The short form lets Odoo auto-prepend whichever series loads it, so the module installs on BOTH 19.0 (local) and 19.2 (prod). See `funedistri_coffin_configurator/__manifest__.py`.
 
-## Coffin configurator = HYBRID (native attributes + thin custom website layer)
-The owner needs a long list of options, some priced, some informational, with image choices, a date field, and one-level conditional show/hide. Native Odoo covers most of it; a small custom layer fills the gaps.
+## Coffin configurator = NATIVE ONLY (no custom config layer)
+**RESOLVED 2026-06-15 (ADR 0004, reaffirmed):** coffin configuration is done **exclusively with native Odoo Product Attributes**. There is **no** custom config layer, **no** conditional reveal, **no** custom line fields. "Not perfect, but it does the job for v1." The earlier hybrid plan (custom date fields + a `coffin.config.rule` reveal model + reveal JS) is **dropped** — it was the most code, the most Odoo-upgrade risk, and the part that fought the framework hardest.
 
-- **Priced / discrete options** (wood, handles…) → native **product attributes & variants**.
+- **Priced / discrete options** (wood, handles, plaque type…) → native **product attributes & variants**.
   - Use **"no variant" mode** (don't auto-create SKU variants) → avoids combinatorial DB explosion; the selection is captured on the sale order line.
   - **Image dropdowns** → native "Image" display type on attribute values. ✅ native.
-- **Engraving text** → native **"custom value"** attribute (free text on the order line) **+ a custom constraint** for the ≤20-char rule (native custom value has no length validation).
-- **Date picking** → ❌ NOT native. Custom date field(s) per line, stored on `sale.order.line` (refined 2026-06-10).
-  - **Design goal = FLEXIBLE, not a fixed schema.** Any date field must be **optional**, and a choice in the form may **imply / reveal other fields** (one-level conditional, see below). Dates are just one kind of conditionally-shown field.
-  - Concrete examples (NOT an exhaustive or frozen list):
-    - **Death date** — deceased's date of death, **engraved on the coffin plate**.
-    - **Delivery date** — deadline the SALESMAN needs the order by. Not engraved.
-  - Captured on the website product/checkout form, flow onto the draft order line for the owner.
-  - **RESOLVED (2026-06-10): dev-defined but generic.** Custom date/text/yes-no fields live in CODE (dev adds a new one). But each is **optional**, and the conditional-reveal mechanism is **generic** — any field can be wired to any trigger via small config, no rewrite per rule. Adding a brand-new field type = a dev touch (acceptable; these change rarely). The frequently-changing part — priced dropdown options — stays owner-self-serve via native attributes. Owner does NOT get a meta-configurator UI to invent fields. Keeps the custom layer thin.
-- **Conditional logic** → confirmed **one-level only** (pick X → show/enable field Y). ❌ not native (native only has exclusion rules). Mechanism (refined 2026-06-10):
-  - **Rules = single source of truth in Python/data** (e.g. on the attribute value / a config record). The product page renders them into the DOM (data attributes); a small **custom JS** snippet consumes them to show/hide/disable fields. NO rule duplicated in JS.
-  - The **server reads the SAME rules** to validate. JS = UX only; server = truth.
-  - **Required-when fields validated server-side** (controller / `@api.constrains`), even though price-hiding is only "practical." Reason: a missing required field (e.g. death date when engraving=yes) = a broken draft the owner ships blind — this is **data integrity**, not price secrecy, so it must not be client-side-only.
+- **Free-text data** (engraving text, death date, delivery date) → native **`is_custom` attribute values** (`product.attribute.custom.value` on the line). Free text only — NO typed Date field, NO length limit, NO format validation. The Owner reads and corrects them at Validate.
+- **Conditional reveal → OUT.** Native Odoo cannot show/hide a field based on another choice (it only has mutually-exclusive *exclusion* rules). We accept **always-visible fields**: e.g. a buyer can pick "no plaque" and still see/fill a plaque-name box. That contradiction is **not** prevented by the system — the **Owner is the single validation backstop** and fixes it at Validate (he fully edits every draft anyway, and the user base is small/curated).
 - Output of checkout = a **draft sale order** (see Order workflow).
-- **Owner-side visibility (Step 4.7):** the custom line fields (`engraving_text`, `death_date`, `delivery_date`) are captured on the website but invisible on the native sale order form — Odoo's form knows nothing of custom columns. `views/sale_order_views.xml` inherits `sale.view_order_form` and adds them as editable columns on the order-line list so the Owner can read AND correct them before validating (the Salesman built blind). Without this the data is stored but unreachable in the back office.
+- **Backend visibility:** native `is_custom` values appear on the order line by default — no inherited view, no custom columns needed.
 - All of this runs on the **website frontend** (`website_sale`), because B2B users never touch the backend.
+
+> ⚠️ **Code cleanup pending:** the dropped layer still exists in code (`models/coffin_config_rule.py`, `models/sale_order_line.py` custom fields, `static/src/js/coffin_cart_fields.js`, `views/cart_templates.xml` custom fields, the `sale_order_views.xml` columns, `security/ir.model.access.csv` for the rule, `tests/test_reveal_rules.py`) and is wired at submit (`_validate_reveal_rules()` in `controllers/main.py`). Executing ADR 0004 = removing all of it. Docs updated 2026-06-15; code removal is the follow-up.
 
 ## Roles & price visibility
 - See Terminology. Owner = backend only. SALESMAN / STORE_OWNER = portal users, frontend only.
