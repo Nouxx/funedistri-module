@@ -47,9 +47,13 @@
             <field name="attribute_id" ref="attr_longueur"/>
             <field name="sequence">1</field>
         </record>
+        <!-- "Sur mesure" is a FREE-TEXT choice: is_custom=True reveals a text box
+             when picked, so the B2B user types the custom length. The fixed sizes
+             (185, 195) stay plain choices. (Native is_custom, ADR 0004.) -->
         <record id="val_longueur_custom" model="product.attribute.value">
             <field name="name">Sur mesure</field>
             <field name="attribute_id" ref="attr_longueur"/>
+            <field name="is_custom" eval="True"/>
             <field name="sequence">2</field>
         </record>
 
@@ -69,9 +73,11 @@
             <field name="attribute_id" ref="attr_largeur"/>
             <field name="sequence">1</field>
         </record>
+        <!-- "Sur mesure" = free-text (is_custom), like Longeur above. -->
         <record id="val_largeur_custom" model="product.attribute.value">
             <field name="name">Sur mesure</field>
             <field name="attribute_id" ref="attr_largeur"/>
+            <field name="is_custom" eval="True"/>
             <field name="sequence">2</field>
         </record>
 
