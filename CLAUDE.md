@@ -18,7 +18,7 @@ The detailed, resolved design is under **Design decisions** below.
 # Guidelines
 
 - ALWAYS explain in comments what the code does and WHY. I'm new to Python and Odoo, so I need this information.
-- **One module, organised by feature.** All features live in `funedistri_coffin_configurator` (NOT split into separate modules — see ADR 0006). Inside it, prefer one file per feature within each Odoo layer folder. The feature→files map is `docs/FEATURE_MAP.md` — keep it current when adding/moving a feature.
+- **One module, organised by feature.** All features live in `funedistri_customizations` (NOT split into separate modules — see ADR 0006). Inside it, prefer one file per feature within each Odoo layer folder. The feature→files map is `docs/FEATURE_MAP.md` — keep it current when adding/moving a feature.
 
 # Terminology / Naming rules
 
@@ -66,7 +66,7 @@ The detailed, resolved design is under **Design decisions** below.
 ## Repo & deployment
 - This repo **becomes the Odoo.sh addons repo**. The module lives in the repo, `git push` → Odoo.sh deploys. No separate copy step; local dev mirrors prod.
 - **Odoo version: prod (funedistri.odoo.com on Odoo.sh) = 19.2; local dev image `odoo:19` reports series 19.0** (verified at Step 0 scaffold, 2026-06-10). The community `odoo:19` image is the 19.0 generation — local does NOT mirror prod at the series level.
-  - **Manifest version = short form `1.0.0`** (NOT `19.x.*`). A series-prefixed version that mismatches the running server makes Odoo set `installable=False` ("incompatible version"). The short form lets Odoo auto-prepend whichever series loads it, so the module installs on BOTH 19.0 (local) and 19.2 (prod). See `funedistri_coffin_configurator/__manifest__.py`.
+  - **Manifest version = short form `1.0.0`** (NOT `19.x.*`). A series-prefixed version that mismatches the running server makes Odoo set `installable=False` ("incompatible version"). The short form lets Odoo auto-prepend whichever series loads it, so the module installs on BOTH 19.0 (local) and 19.2 (prod). See `funedistri_customizations/__manifest__.py`.
 
 ## Coffin configurator = NATIVE ONLY (no custom config layer)
 **RESOLVED 2026-06-15 (ADR 0004, reaffirmed):** coffin configuration is done **exclusively with native Odoo Product Attributes**. There is **no** custom config layer, **no** conditional reveal, **no** custom line fields. "Not perfect, but it does the job for v1." The earlier hybrid plan (custom date fields + a `coffin.config.rule` reveal model + reveal JS) is **dropped** — it was the most code, the most Odoo-upgrade risk, and the part that fought the framework hardest.
@@ -115,7 +115,7 @@ The detailed, resolved design is under **Design decisions** below.
 - **No** — not needed to build the module. Just declare the proper dependencies (`website_sale`, `sale`). Optionally pull a production DB dump later for realistic testing.
 
 ## Module name
-- Technical name = **`funedistri_coffin_configurator`** (folder name + manifest). Hard to rename later.
+- Technical name = **`funedistri_customizations`** (folder name + manifest). Hard to rename later.
 
 ## Local dev setup (`make dev`)
 - **Docker Compose**: official `odoo:19` image + `postgres:16` (Odoo 19 needs PG 14+). `docker compose up`.

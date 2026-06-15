@@ -24,8 +24,8 @@ services:
       - "8069:8069"
     volumes:
       # Mount the WHOLE repo root as an addons path. Our module folder
-      # (funedistri_coffin_configurator) is then visible at
-      # /mnt/extra-addons/funedistri_coffin_configurator. Odoo scans for
+      # (funedistri_customizations) is then visible at
+      # /mnt/extra-addons/funedistri_customizations. Odoo scans for
       # __manifest__.py and ignores non-module dirs (docs/, .git, *.md).
       - ./:/mnt/extra-addons
       # Our config (addons path, DB creds) into the place Odoo reads by default.

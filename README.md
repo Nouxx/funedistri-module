@@ -1,6 +1,6 @@
 # funedistri-module
 
-Custom Odoo module **`funedistri_coffin_configurator`** for
+Custom Odoo module **`funedistri_customizations`** for
 [Funedistri](https://funedistri.odoo.com) — a B2B coffin shop on Odoo.sh. It lets
 the Owner define configurable coffins (native Product Attributes) in the backend
 and lets approved B2B users build and submit them as Pending Orders, with

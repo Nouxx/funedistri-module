@@ -2,7 +2,7 @@
 
 All Funedistri features (price masking, B2B roles, submit-order flow, configured-coffin
 line data, conditional reveal, and the planned address book + stock draw-down) live in
-**one** Odoo module, `funedistri_coffin_configurator`. We will not split features into
+**one** Odoo module, `funedistri_customizations`. We will not split features into
 separate modules.
 
 ## Context / trade-off

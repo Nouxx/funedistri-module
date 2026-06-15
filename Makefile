@@ -7,7 +7,7 @@
 #
 # Name of the dev database. Override with: make dev DB=foo
 DB ?= funedistri
-MODULE := funedistri_coffin_configurator
+MODULE := funedistri_customizations
 # Local-only seed module (test B2B companies + users). Installed for dev ONLY,
 # never on Odoo.sh. See funedistri_dev_seed/__manifest__.py for the why.
 SEED := funedistri_dev_seed

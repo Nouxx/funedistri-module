@@ -8,7 +8,11 @@
 # adds its own files to `data` / `assets` below, grouped + commented per feature
 # (see docs/FEATURE_MAP.md and ADR 0006 — one module, organised by feature).
 {
-    "name": "Funedistri Coffin Configurator",
+    # Catch-all customizations module for Funedistri (one module, organised by
+    # feature — ADR 0006). Named generically, not "coffin configurator", because it
+    # holds ALL custom features (roles, price masking, address book, …), not just
+    # the configurator.
+    "name": "Funedistri Customizations",
     # SHORT version form (no Odoo-series prefix) on purpose: a series prefix that
     # mismatches the running server marks the module installable=False. Local dev
     # image odoo:19 reports series 19.0, prod (Odoo.sh) is 19.2 — the short form

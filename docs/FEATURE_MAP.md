@@ -1,4 +1,4 @@
-# Feature map — `funedistri_coffin_configurator`
+# Feature map — `funedistri_customizations`
 
 **One module, organised by feature** (ADR 0006). We do not split features into
 separate Odoo modules. Inside the single module, Odoo's standard layer folders

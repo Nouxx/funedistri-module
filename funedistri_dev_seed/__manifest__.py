@@ -33,7 +33,7 @@
     # adds to res.partner/res.users, and relies on its create() sync to drop
     # each user into the right hidden security group.
     "depends": [
-        "funedistri_coffin_configurator",
+        "funedistri_customizations",
     ],
     # Regular data (NOT demo): loads whenever this module is installed. Because
     # we only ever install this module locally, the seed only exists locally.
