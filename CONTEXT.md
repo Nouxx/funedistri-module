@@ -55,6 +55,14 @@ The B2B organization that buys from Funedistri. Its B2B users (one Store owner +
 any number of Salesmen) all sit under it and share its order history.
 _Avoid_: client, account, customer (bare)
 
+**Company address**:
+A delivery address the Owner has pre-defined for a Customer company (the Owner has
+negotiated shipping for it). At checkout a B2B user may **only select** among their
+company's Company addresses — never create or edit one. Only the Owner manages them
+(backend). Applies to the delivery address; the invoice address stays native.
+_Avoid_: shipping address (bare), new address, approved address (approval is an
+account concept)
+
 ### Product
 
 **Coffin model**:
@@ -81,6 +89,14 @@ An Option whose chosen value changes the coffin's price.
 **Informational option**:
 An Option captured for the Owner but with no price effect (e.g. a note, the
 death date, a yes/no flag).
+
+**Part**:
+A physical component (e.g. a handle) the Funedistri Owner both **sells loose** and
+**consumes inside a coffin** — one shared stock. Choosing the matching Option value
+on a coffin must draw down the same Part stock, so loose sales and coffin sales
+can't oversell it. (The Owner runs Odoo Stock + Manufacturing; how the draw-down is
+wired is an implementation question — see docs/explore-bom-mo.md.)
+_Avoid_: component (bare), piece
 
 ### Order
 
@@ -115,19 +131,18 @@ date.
 _Avoid_: plaque, nameplate
 
 **Death date**:
-The deceased's date of death. **Engraved on the coffin plate.** Supplied by the
-B2B user.
+The deceased's date of death, **engraved on the coffin plate**. Supplied by the
+B2B user as a **free-text Option value** (no date type, no validation in v1); the
+Owner reads and corrects it at Validate.
 
 **Delivery date**:
 The deadline by which the Salesman needs the order delivered. Logistics only;
-**not engraved**.
+**not engraved**. Captured as a **free-text Option value** in v1, like Death date.
 
 **Engraving text**:
-Free text engraved on the plate (≤20 chars).
+Free text engraved on the plate. A free-text Option value; the plate is short, so
+the Owner trims overlong text at Validate (no system length limit in v1).
 
-**Reveal rule**:
-A one-level link on a Coffin model: choosing a given Option value (or setting a
-given flag) reveals — and may require — another configuration field. E.g.
-engraving = yes reveals the Death date. The single statement of when a field
-shows; the same rule the frontend obeys and the order validates against.
-_Avoid_: condition, dependency, exclusion (Odoo's native, different thing)
+_(Retired for v1 — **Reveal rule**: the one-level conditional show/require of a
+field. v1 has no conditional reveal; every field is always visible and the Owner
+catches incoherent combinations at Validate. See ADR 0004.)_

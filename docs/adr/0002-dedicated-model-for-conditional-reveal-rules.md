@@ -4,7 +4,11 @@ Date: 2026-06-10
 
 ## Status
 
-Accepted
+Superseded by [ADR 0004](./0004-native-only-config-data-no-reveal-v1.md) (2026-06-14).
+
+v1 drops conditional reveal entirely and goes fully native — `coffin.config.rule`,
+the reveal JS, and the custom `sale.order.line` fields are removed. The decision
+below is retained for history and as the design to revive if reveal returns post-v1.
 
 ## Context
 

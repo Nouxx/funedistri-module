@@ -5,24 +5,25 @@ The two invariants the server must guarantee (JS is UX only):
   1. required-when: if a rule's trigger value is selected on a line and the rule
      is required_when, the target field must be filled — else submit is refused.
   2. the ≤20-char engraving constraint rejects an over-long text.
+
+Fixtures (the coffin + Gravure=Oui trigger + the two rules) are built by
+``CoffinFixtureMixin`` — no demo/seed dependency.
 """
 
 from odoo.exceptions import ValidationError
 from odoo.tests import HttpCase, TransactionCase, tagged
 
+from .common import CoffinFixtureMixin
+
 
 @tagged('post_install', '-at_install')
-class TestRevealRules(TransactionCase):
+class TestRevealRules(CoffinFixtureMixin, TransactionCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.coffin = cls.env.ref('funedistri_coffin_configurator.coffin_demo')
-        yes_value = cls.env.ref('funedistri_coffin_configurator.attr_engraving_yes')
         # The per-coffin PTAV for Gravure = Oui (what a line actually stores).
-        cls.yes_ptav = cls.coffin.attribute_line_ids.product_template_value_ids.filtered(
-            lambda p: p.product_attribute_value_id == yes_value
-        )
+        cls.yes_ptav = cls.engraving_yes_ptav
         cls.partner = cls.env['res.partner'].create({'name': 'Rule Test Partner'})
 
     def _make_line(self, **vals):
@@ -64,17 +65,13 @@ class TestRevealRules(TransactionCase):
 
 
 @tagged('post_install', '-at_install')
-class TestRevealRulesWeb(HttpCase):
+class TestRevealRulesWeb(CoffinFixtureMixin, HttpCase):
     """The cart-page capture: fields render, and the save route persists/validates."""
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.coffin = cls.env.ref('funedistri_coffin_configurator.coffin_demo')
-        yes_value = cls.env.ref('funedistri_coffin_configurator.attr_engraving_yes')
-        cls.yes_ptav = cls.coffin.attribute_line_ids.product_template_value_ids.filtered(
-            lambda p: p.product_attribute_value_id == yes_value
-        )
+        cls.yes_ptav = cls.engraving_yes_ptav
         cls.user = cls.env['res.users'].create({
             'name': 'Web Rule User',
             'login': 'web_rule_user',

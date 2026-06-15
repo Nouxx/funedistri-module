@@ -40,8 +40,9 @@ The detailed, resolved design is under **Design decisions** below.
 | Options (the choices) | `product.attribute` + `product.attribute.value` | linked to template via `product.template.attribute.line` |
 | Option price | `product.template.attribute.value.price_extra` | |
 | Configured coffin | `sale.order.line` | carries `product_no_variant_attribute_value_ids` + `product_custom_attribute_value_ids` |
-| Engraving text | `product.attribute.custom.value` (native) | ≤20-char constraint is custom |
-| Death date / Delivery date | custom date fields on `sale.order.line` | no native model |
+| Engraving text | **custom `engraving_text` Char on `sale.order.line`** | Step 4 chose a custom field (not native `product.attribute.custom.value`) so it shares the generic conditional-reveal + backend-view plumbing with the dates; ≤20-char `@api.constrains` |
+| Death date / Delivery date | custom `death_date` / `delivery_date` Date on `sale.order.line` | no native model |
+| Backend visibility of the above | `views/sale_order_views.xml` inherits `sale.view_order_form` | Step 4.7: the three custom line fields are columns on the order-line list, else the Owner sees only the line description and not what was captured |
 | Order | `sale.order` | |
 | **Pending** state | `sale.order.state = 'draft'` | Odoo label "Quotation"; we never say "quotation" |
 | Owner **Validates** | `sale.order.action_confirm()` → `state = 'sale'` | we skip the `'sent'` state — never email a quote to a price-blind salesman |
@@ -78,6 +79,7 @@ The owner needs a long list of options, some priced, some informational, with im
   - The **server reads the SAME rules** to validate. JS = UX only; server = truth.
   - **Required-when fields validated server-side** (controller / `@api.constrains`), even though price-hiding is only "practical." Reason: a missing required field (e.g. death date when engraving=yes) = a broken draft the owner ships blind — this is **data integrity**, not price secrecy, so it must not be client-side-only.
 - Output of checkout = a **draft sale order** (see Order workflow).
+- **Owner-side visibility (Step 4.7):** the custom line fields (`engraving_text`, `death_date`, `delivery_date`) are captured on the website but invisible on the native sale order form — Odoo's form knows nothing of custom columns. `views/sale_order_views.xml` inherits `sale.view_order_form` and adds them as editable columns on the order-line list so the Owner can read AND correct them before validating (the Salesman built blind). Without this the data is stored but unreachable in the back office.
 - All of this runs on the **website frontend** (`website_sale`), because B2B users never touch the backend.
 
 ## Roles & price visibility

@@ -21,11 +21,35 @@ from odoo.exceptions import ValidationError
 from odoo.http import request, route
 
 from odoo.addons.website_sale.controllers.main import WebsiteSale
+from odoo.addons.website_sale.controllers.cart import Cart
+from odoo.addons.website_sale.controllers.delivery import Delivery
 from odoo.addons.sale.controllers.portal import CustomerPortal
+
+# The placeholder string the masked delivery JSON routes return instead of any
+# amount. Mirrors the QWeb "Prix masqué" placeholder so the cart summary, were it
+# ever shown, reads the same. Kept here (not a template) because these are JSON
+# routes returning pre-rendered HTML fragments for the amount cells.
+_MASKED_AMOUNT_HTML = '<span class="text-muted fst-italic coffin-price-masked">Prix masqué</span>'
 
 from odoo.addons.funedistri_coffin_configurator.models.sale_order_line import (
     COFFIN_CONFIG_FIELDS,
 )
+
+# xmlid of the hidden "no prices" group. The render-side masking (QWeb) keys off
+# this via the `groups` attribute; the JSON-route masking below keys off it via
+# has_group on the CURRENT user — both are "the viewer IS the salesman" checks
+# (ADR-0001). Async/document renders (email, PDF, portal order detail) instead
+# key off the order partner's role — that is Step 7.
+SALESMAN_GROUP = 'funedistri_coffin_configurator.coffin_salesman_group'
+
+
+def _viewer_is_salesman():
+    """True when the user making THIS request is a price-blind Salesman.
+
+    Safe for public/no-session requests: has_group on the public user simply
+    returns False, so the shop stays priced for anonymous browsing.
+    """
+    return request.env.user.has_group(SALESMAN_GROUP)
 
 
 class CoffinWebsiteSale(WebsiteSale):
@@ -127,3 +151,106 @@ class CoffinCustomerPortal(CustomerPortal):
                 ('state', '=', 'sale'),
                 '&', ('state', '=', 'draft'), ('coffin_is_submitted', '=', True),
         ]
+
+
+class CoffinCart(Cart):
+    """Step 6 — strip the real money out of the cart JSON routes for a Salesman.
+
+    The QWeb masking (views/price_visibility_templates.xml) hides prices in the
+    rendered HTML — including the HTML fragments these routes return (cart_lines,
+    totals), since those go through the same masked templates. But the routes
+    ALSO return RAW numbers as plain JSON keys, which no template touches:
+
+      - ``/shop/cart/update`` -> ``amount`` (order total) and ``minor_amount``.
+      - ``/shop/cart/add``    -> ``notification_info.lines[].price_total`` and
+                                 ``tracking_info[].price`` / ``discount``.
+
+    ADR-0001's guardrail is that the server must NEVER emit the real number to a
+    Salesman, not even in JSON. So we call super() and zero those keys for a
+    Salesman. We zero rather than delete: the frontend JS expects the keys to
+    exist; the displayed total is masked in the HTML anyway, so a 0 here is
+    harmless and never reveals the real figure.
+
+    Scope note (ADR-0001): this covers the main cart/checkout JSON surface, not
+    every price-bearing route (e.g. variant-price recompute). Masking is
+    practical, not adversary-proof — residual leakage via crafted requests is
+    accepted for this non-adversarial B2B role.
+    """
+
+    def update_cart(self, line_id, quantity, product_id=None, **kwargs):
+        values = super().update_cart(
+            line_id, quantity, product_id=product_id, **kwargs
+        )
+        if _viewer_is_salesman():
+            # Order total + its minor-units (cents) form. Never hand the real
+            # number to a price-blind Salesman.
+            values['amount'] = 0.0
+            values['minor_amount'] = 0
+        return values
+
+    def _get_cart_notification_information(self, order, added_qty_per_line):
+        # The "added to cart" toast lists each added line's price_total. Zero it
+        # for a Salesman so the toast carries no money.
+        info = super()._get_cart_notification_information(order, added_qty_per_line)
+        if _viewer_is_salesman():
+            for line in info.get('lines', []):
+                line['price_total'] = 0.0
+        return info
+
+    def _get_tracking_information(self, order_sudo, line_ids):
+        # Analytics payload (datalayer) also carries unit price + discount. Zero
+        # them for a Salesman — same no-number-emitted rule.
+        info = super()._get_tracking_information(order_sudo, line_ids)
+        if _viewer_is_salesman():
+            for item in info:
+                item['price'] = 0.0
+                item['discount'] = 0.0
+        return info
+
+
+class CoffinDelivery(Delivery):
+    """Step 6 — strip amounts out of the delivery-step JSON routes for a Salesman.
+
+    The checkout (address) page lets the user pick a delivery method; two JSON
+    routes feed it money that QWeb masking can't reach:
+
+      - ``/shop/set_delivery_method`` -> ``_order_summary_values`` returns the
+        order's delivery/untaxed/tax/total amounts (as rendered HTML).
+      - ``/shop/get_delivery_rate``   -> returns the carrier ``price`` and its
+        rendered ``amount_delivery``.
+
+    ADR-0001's guardrail: the server must NEVER emit the real number to a Salesman,
+    not even in JSON. So we replace those amounts with the "Prix masqué"
+    placeholder (and zero the raw ``price``). We keep ``success`` truthy so the
+    delivery method still counts as selectable — otherwise the native JS would
+    disable the carrier and, with it, the "Confirm" button.
+
+    NB: even with these masked, the native checkout JS would still try to write
+    the values into the (removed) totals table; ``coffin_checkout_mask.js`` guards
+    that crash. The two fixes are complementary: this one stops the leak, the JS
+    one stops the throw.
+    """
+
+    def _order_summary_values(self, order, **kwargs):
+        values = super()._order_summary_values(order, **kwargs)
+        if _viewer_is_salesman():
+            for key in ('amount_delivery', 'amount_untaxed', 'amount_tax',
+                        'amount_total'):
+                if key in values:
+                    values[key] = _MASKED_AMOUNT_HTML
+        return values
+
+    def shop_get_delivery_rate(self, dm_id):
+        rate = super().shop_get_delivery_rate(dm_id)
+        if _viewer_is_salesman() and isinstance(rate, dict):
+            # Never hand the carrier price to a price-blind Salesman. Keep the
+            # rate "successful" so the method stays selectable; only the figure
+            # is suppressed.
+            if 'price' in rate:
+                rate['price'] = 0.0
+            if 'amount_delivery' in rate:
+                rate['amount_delivery'] = _MASKED_AMOUNT_HTML
+            # Force the "Free" wording off so we don't imply a zero price; the
+            # placeholder already conveys "hidden".
+            rate['is_free_delivery'] = False
+        return rate

@@ -23,10 +23,15 @@
     # itself pulls in sale. Listing sale explicitly documents that we use it
     # directly (sale.order / sale.order.line) and not only through website_sale.
     "depends": [
-        "website_sale",  # the e-commerce frontend B2B users shop on
-        "sale",          # sale.order / sale.order.line — the Order backbone
-        "contacts",      # Contacts app — where the Owner sets each B2B user's
-                         # b2b_role on their res.partner (Step 2)
+        "website_sale",     # the e-commerce frontend B2B users shop on
+        "sale",             # sale.order / sale.order.line — the Order backbone
+        "sale_management",  # the user-facing "Sales" BACKEND APP (menus, order
+                            # views, settings). `sale` alone is the technical
+                            # engine with no app menu; the Owner validates/edits
+                            # Orders from this app, so depend on it explicitly —
+                            # otherwise the Sales app is absent on a fresh DB.
+        "contacts",         # Contacts app — where the Owner sets each B2B user's
+                            # b2b_role on their res.partner (Step 2)
     ],
     # data = files (XML/CSV) loaded on install/update, in this order.
     "data": [
@@ -35,36 +40,39 @@
         "security/coffin_groups.xml",
         # Step 4: access rules for the coffin.config.rule model.
         "security/ir.model.access.csv",
+        # Enable the "Variants" feature for backend users so the Attributes
+        # menu is visible (replaces the demo seed's implicit enabling).
+        "data/coffin_settings.xml",
         # Step 1 checkout overrides: Submit-order button + Pending confirmation.
         "views/checkout_templates.xml",
         # Step 1.5: portal list shows submitted Orders with a Pending badge.
         "views/portal_templates.xml",
         # Step 2.4: b2b_role dropdown on the contact form (backend).
         "views/res_partner_views.xml",
+        # Step 4.7: surface per-line coffin config (engraving + dates) on the
+        # backend sale order form so the Owner can see/edit what was captured.
+        "views/sale_order_views.xml",
         # Step 4.5: per-line custom config fields on the cart page.
         "views/cart_templates.xml",
+        # Step 6: Salesman price masking across shop/cart/checkout/portal list.
+        "views/price_visibility_templates.xml",
     ],
     # Frontend JS/CSS bundles. web.assets_frontend loads on the website.
     "assets": {
         "web.assets_frontend": [
             # Step 4.6: generic conditional-reveal + save for the cart fields.
             "funedistri_coffin_configurator/static/src/js/coffin_cart_fields.js",
+            # Step 6 fix: stop the native checkout JS from crashing (and leaving
+            # the "Confirm" button disabled) when the Salesman's totals table is
+            # masked away. See the file header for the full failure chain.
+            "funedistri_coffin_configurator/static/src/js/coffin_checkout_mask.js",
         ],
     },
-    # demo = data loaded ONLY when the DB is created with demo enabled (our dev
-    # DB). Never loads in production. Order matters: attributes -> coffin (uses
-    # them) -> users.
-    "demo": [
-        # Step 3.1: native priced attributes (Bois / Poignées).
-        "demo/coffin_attributes.xml",
-        # Step 3.2: the configurable demo Coffin model wired to those attributes.
-        "demo/coffin_product.xml",
-        # Step 3.3: demo customer company + Store owner + Salesman (shared
-        # commercial_partner_id -> native company-scoped order visibility).
-        "demo/coffin_users.xml",
-        # Step 4.4: conditional-reveal rules (Gravure=Oui -> death date + text).
-        "demo/coffin_rules.xml",
-    ],
+    # NO demo data. The old demo seed is retired; local dev test records (B2B
+    # companies/users + a configurable coffin) now live in the separate, local-
+    # only `funedistri_dev_seed` module, installed by `make dev` and never on
+    # prod. Tests build their own fixtures (tests/common.py), so they don't rely
+    # on any seed. See funedistri_dev_seed/__manifest__.py for the rationale.
     # application=False → this is a feature module, not a standalone "app" tile.
     "application": False,
     # installable=True → it shows up and can be installed.

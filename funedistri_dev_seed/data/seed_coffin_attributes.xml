@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LOCAL DEV SEED — coffin Options (native product attributes + values).
+
+  Captured from the dev DB the Owner configured by hand (the "Cercueil Taica"
+  setup), so every fresh `make dev` rebuilds the same clickable configurator
+  without re-entering it. In PRODUCTION the Owner self-serves these via the
+  native Odoo attribute UI — that is the whole point of the "no meta-configurator"
+  decision — so they are NOT shipped as prod `data`; they live here, in the
+  local-only seed module.
+
+  Key native settings per attribute:
+  - create_variant = 'no_variant'  → Odoo never explodes the catalog into one
+    SKU per combination; the chosen Options are captured on the sale order LINE.
+    (CLAUDE.md decision. The live DB the Owner built used 'dynamic'; we normalise
+    the seed back to 'no_variant' on purpose.)
+  - display_type                   → how the choice renders: 'image' = picture
+    picker, 'select' = dropdown, 'radio' = radio buttons.
+
+  Prices live on each VALUE as `default_extra_price`: when a product is built
+  from these attributes, its per-line price_extra defaults from this number.
+  Only non-zero extras are written; the rest default to 0.
+
+  Images: the Owner uploaded real photos for some image-type values. Embedding
+  real photos here would bloat the seed, so we ship a tiny 16x16 placeholder
+  swatch (just so the 'image' picker has something to render). The Owner
+  replaces these with real pictures in the UI.
+
+  noupdate="1" → created once; reseed = drop DB (make reset) + make dev.
+-->
+<odoo>
+    <data noupdate="1">
+
+        <!-- ============ Longeur (cm) — radio, no price ============ -->
+        <record id="attr_longueur" model="product.attribute">
+            <field name="name">Longeur (cm)</field>
+            <field name="display_type">radio</field>
+            <field name="create_variant">no_variant</field>
+        </record>
+        <record id="val_longueur_185" model="product.attribute.value">
+            <field name="name">185</field>
+            <field name="attribute_id" ref="attr_longueur"/>
+            <field name="sequence">0</field>
+        </record>
+        <record id="val_longueur_195" model="product.attribute.value">
+            <field name="name">195</field>
+            <field name="attribute_id" ref="attr_longueur"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="val_longueur_custom" model="product.attribute.value">
+            <field name="name">Sur mesure</field>
+            <field name="attribute_id" ref="attr_longueur"/>
+            <field name="sequence">2</field>
+        </record>
+
+        <!-- ============ Largueur (cm) — radio, no price ============ -->
+        <record id="attr_largeur" model="product.attribute">
+            <field name="name">Largueur (cm)</field>
+            <field name="display_type">radio</field>
+            <field name="create_variant">no_variant</field>
+        </record>
+        <record id="val_largeur_55" model="product.attribute.value">
+            <field name="name">55</field>
+            <field name="attribute_id" ref="attr_largeur"/>
+            <field name="sequence">0</field>
+        </record>
+        <record id="val_largeur_94" model="product.attribute.value">
+            <field name="name">94</field>
+            <field name="attribute_id" ref="attr_largeur"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="val_largeur_custom" model="product.attribute.value">
+            <field name="name">Sur mesure</field>
+            <field name="attribute_id" ref="attr_largeur"/>
+            <field name="sequence">2</field>
+        </record>
+
+        <!-- ============ Poignées — select; "Sans" gives -10 ============ -->
+        <record id="attr_poignees" model="product.attribute">
+            <field name="name">Poignées</field>
+            <field name="display_type">select</field>
+            <field name="create_variant">no_variant</field>
+        </record>
+        <record id="val_poignees_posees" model="product.attribute.value">
+            <field name="name">Posées</field>
+            <field name="attribute_id" ref="attr_poignees"/>
+            <field name="sequence">0</field>
+        </record>
+        <record id="val_poignees_non_posees" model="product.attribute.value">
+            <field name="name">Non posées</field>
+            <field name="attribute_id" ref="attr_poignees"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="val_poignees_sans" model="product.attribute.value">
+            <field name="name">Sans</field>
+            <field name="attribute_id" ref="attr_poignees"/>
+            <field name="sequence">2</field>
+            <field name="default_extra_price">-10.0</field>
+        </record>
+
+        <!-- ============ Emblème — image; Croix +20, Croix avec rose +25 ====== -->
+        <record id="attr_embleme" model="product.attribute">
+            <field name="name">Emblème</field>
+            <field name="display_type">image</field>
+            <field name="create_variant">no_variant</field>
+        </record>
+        <record id="val_embleme_sans" model="product.attribute.value">
+            <field name="name">Sans</field>
+            <field name="attribute_id" ref="attr_embleme"/>
+            <field name="sequence">0</field>
+        </record>
+        <record id="val_embleme_croix" model="product.attribute.value">
+            <field name="name">Croix</field>
+            <field name="attribute_id" ref="attr_embleme"/>
+            <field name="sequence">1</field>
+            <field name="default_extra_price">20.0</field>
+            <field name="image">iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR4nGOo8NAgCTGMahjVMHw1AACn3egBHUOGvwAAAABJRU5ErkJggg==</field>
+        </record>
+        <record id="val_embleme_croix_rose" model="product.attribute.value">
+            <field name="name">Croix avec rose</field>
+            <field name="attribute_id" ref="attr_embleme"/>
+            <field name="sequence">2</field>
+            <field name="default_extra_price">25.0</field>
+            <field name="image">iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR4nGM4saqCJMQwqmFUw/DVAADPAuoQq2r+KgAAAABJRU5ErkJggg==</field>
+        </record>
+
+        <!-- ============ Plaque — image; Argent +20, Or +50 ============ -->
+        <record id="attr_plaque" model="product.attribute">
+            <field name="name">Plaque</field>
+            <field name="display_type">image</field>
+            <field name="create_variant">no_variant</field>
+        </record>
+        <record id="val_plaque_sans" model="product.attribute.value">
+            <field name="name">Sans</field>
+            <field name="attribute_id" ref="attr_plaque"/>
+            <field name="sequence">0</field>
+        </record>
+        <record id="val_plaque_argent" model="product.attribute.value">
+            <field name="name">Argent</field>
+            <field name="attribute_id" ref="attr_plaque"/>
+            <field name="sequence">1</field>
+            <field name="default_extra_price">20.0</field>
+            <field name="image">iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR4nGOo8NAgCTGMahjVMHw1AACn3egBHUOGvwAAAABJRU5ErkJggg==</field>
+        </record>
+        <record id="val_plaque_or" model="product.attribute.value">
+            <field name="name">Or</field>
+            <field name="attribute_id" ref="attr_plaque"/>
+            <field name="sequence">2</field>
+            <field name="default_extra_price">50.0</field>
+            <field name="image">iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR4nGM4saqCJMQwqmFUw/DVAADPAuoQq2r+KgAAAABJRU5ErkJggg==</field>
+        </record>
+
+        <!-- ===== Gravure plaque — THREE separate single-value radio attributes
+             exactly as configured in the DB (attr ids 6/7/8). This is unusual
+             (normally one attribute with three values); kept faithful to what
+             the Owner built. Flag for review if it was unintentional. ===== -->
+        <record id="attr_gravure_nom" model="product.attribute">
+            <field name="name">Gravure plaque</field>
+            <field name="display_type">radio</field>
+            <field name="create_variant">no_variant</field>
+        </record>
+        <record id="val_gravure_nom" model="product.attribute.value">
+            <field name="name">Nom</field>
+            <field name="attribute_id" ref="attr_gravure_nom"/>
+            <field name="sequence">0</field>
+        </record>
+
+        <record id="attr_gravure_naissance" model="product.attribute">
+            <field name="name">Gravure plaque</field>
+            <field name="display_type">radio</field>
+            <field name="create_variant">no_variant</field>
+        </record>
+        <record id="val_gravure_naissance" model="product.attribute.value">
+            <field name="name">Année de naissance</field>
+            <field name="attribute_id" ref="attr_gravure_naissance"/>
+            <field name="sequence">0</field>
+        </record>
+
+        <record id="attr_gravure_deces" model="product.attribute">
+            <field name="name">Gravure plaque</field>
+            <field name="display_type">radio</field>
+            <field name="create_variant">no_variant</field>
+        </record>
+        <record id="val_gravure_deces" model="product.attribute.value">
+            <field name="name">Année de décès</field>
+            <field name="attribute_id" ref="attr_gravure_deces"/>
+            <field name="sequence">0</field>
+        </record>
+
+        <!-- ============ Urne — image; Blanche +20, Grise +50 ============ -->
+        <record id="attr_urne" model="product.attribute">
+            <field name="name">Urne</field>
+            <field name="display_type">image</field>
+            <field name="create_variant">no_variant</field>
+        </record>
+        <record id="val_urne_sans" model="product.attribute.value">
+            <field name="name">Sans</field>
+            <field name="attribute_id" ref="attr_urne"/>
+            <field name="sequence">0</field>
+        </record>
+        <record id="val_urne_blanche" model="product.attribute.value">
+            <field name="name">Blanche</field>
+            <field name="attribute_id" ref="attr_urne"/>
+            <field name="sequence">1</field>
+            <field name="default_extra_price">20.0</field>
+            <field name="image">iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR4nGOo8NAgCTGMahjVMHw1AACn3egBHUOGvwAAAABJRU5ErkJggg==</field>
+        </record>
+        <record id="val_urne_grise" model="product.attribute.value">
+            <field name="name">Grise</field>
+            <field name="attribute_id" ref="attr_urne"/>
+            <field name="sequence">2</field>
+            <field name="default_extra_price">50.0</field>
+            <field name="image">iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR4nGM4saqCJMQwqmFUw/DVAADPAuoQq2r+KgAAAABJRU5ErkJggg==</field>
+        </record>
+
+        <!-- ===== Personalisation urne — THREE separate single-value radio
+             attributes as configured (attr ids 10/11/12). Same faithful-capture
+             note as "Gravure plaque" above. ===== -->
+        <record id="attr_perso_prenom" model="product.attribute">
+            <field name="name">Personalisation urne</field>
+            <field name="display_type">radio</field>
+            <field name="create_variant">no_variant</field>
+        </record>
+        <record id="val_perso_prenom" model="product.attribute.value">
+            <field name="name">Prénom</field>
+            <field name="attribute_id" ref="attr_perso_prenom"/>
+            <field name="sequence">0</field>
+        </record>
+
+        <record id="attr_perso_annee" model="product.attribute">
+            <field name="name">Personalisation urne</field>
+            <field name="display_type">radio</field>
+            <field name="create_variant">no_variant</field>
+        </record>
+        <record id="val_perso_annee" model="product.attribute.value">
+            <field name="name">Année</field>
+            <field name="attribute_id" ref="attr_perso_annee"/>
+            <field name="sequence">0</field>
+        </record>
+
+        <record id="attr_perso_crematorium" model="product.attribute">
+            <field name="name">Personalisation urne</field>
+            <field name="display_type">radio</field>
+            <field name="create_variant">no_variant</field>
+        </record>
+        <record id="val_perso_crematorium" model="product.attribute.value">
+            <field name="name">Crématorium</field>
+            <field name="attribute_id" ref="attr_perso_crematorium"/>
+            <field name="sequence">0</field>
+        </record>
+
+    </data>
+</odoo>

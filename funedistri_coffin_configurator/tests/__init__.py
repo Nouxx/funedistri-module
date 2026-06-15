@@ -3,5 +3,6 @@
 # --test-tags. Each test module must be imported here to be discovered.
 from . import test_submit_order
 from . import test_b2b_role_sync
-from . import test_demo_catalog
+from . import test_catalog
 from . import test_reveal_rules
+from . import test_price_masking

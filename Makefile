@@ -8,6 +8,9 @@
 # Name of the dev database. Override with: make dev DB=foo
 DB ?= funedistri
 MODULE := funedistri_coffin_configurator
+# Local-only seed module (test B2B companies + users). Installed for dev ONLY,
+# never on Odoo.sh. See funedistri_dev_seed/__manifest__.py for the why.
+SEED := funedistri_dev_seed
 
 .PHONY: dev down reset logs
 
@@ -16,16 +19,20 @@ dev: ## Boot PG + Odoo, (re)install the module, hot-reload XML/Python.
 	docker compose up -d db
 	# Run Odoo in the foreground:
 	#   -d $(DB)        → use/create this database
-	#   -i $(MODULE)    → install the module (pulls website_sale + sale via
-	#                     'depends'); on a fresh DB this also creates the DB.
-	#   --with-demo     → load demo data (v19 made demo OPT-IN; without this the
-	#                     demo coffin + B2B users are NOT seeded). Only affects a
-	#                     FRESH DB — demo loads at creation, so `make reset` first
-	#                     if an existing DB was created without it.
+	#   -i $(MODULE),$(SEED) → install the main module (pulls website_sale + sale
+	#                     via 'depends') AND the local-only seed module that
+	#                     creates the test B2B companies + users. On a fresh DB
+	#                     this also creates the DB.
+	#   --without-demo  → NEVER load Odoo's GLOBAL demo data (sample furniture
+	#                     products, sample customers, etc). Our test accounts come
+	#                     from $(SEED)'s regular `data`, not from demo, so the DB
+	#                     stays clean with ONLY our seed. (This flag is a plain
+	#                     boolean in this Odoo build; default is already off, we
+	#                     pass it to be explicit.)
 	#   --dev=all       → developer mode: hot-reload of XML views and Python.
 	# --rm cleans up the one-off container; --service-ports exposes 8069.
 	docker compose run --rm --service-ports odoo \
-		odoo -d $(DB) -i $(MODULE) --with-demo --dev=all
+		odoo -d $(DB) -i $(MODULE),$(SEED) --without-demo --dev=all
 
 down: ## Stop containers (Postgres data is kept in the named volume).
 	# `compose down` does NOT stop one-off `compose run` containers, so a

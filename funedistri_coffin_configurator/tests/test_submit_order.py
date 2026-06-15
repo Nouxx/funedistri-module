@@ -15,23 +15,21 @@ import re
 
 from odoo.tests import HttpCase, tagged
 
+from .common import CoffinFixtureMixin
+
 
 # post_install: run after all modules are installed (the website + routes exist).
 # -at_install: do NOT run during installation (the server isn't fully up then).
 @tagged('post_install', '-at_install')
-class TestSubmitOrder(HttpCase):
+class TestSubmitOrder(CoffinFixtureMixin, HttpCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
 
-        # The demo configurable coffin (Step 3). Its auto-created variant
-        # (product.product) is what actually goes on an order line. Demo data is
-        # loaded in test DBs, so the xmlid resolves here.
-        cls.coffin = cls.env.ref(
-            'funedistri_coffin_configurator.coffin_demo'
-        )
-        cls.coffin_variant = cls.coffin.product_variant_id
+        # The configurable coffin + its sellable variant come from the fixture
+        # mixin (cls.coffin / cls.coffin_variant). We just add the dedicated
+        # checkout user below.
 
         # A B2B-like portal user with a COMPLETE address — the checkout guard
         # (_check_addresses) redirects away if billing/delivery is incomplete,

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Enable the "Variants" feature so the Owner can see and edit product
+        Attributes in the backend (Sales / Website > Configuration > Attributes).
+
+        WHY THIS IS NEEDED
+        Odoo hides the Attributes menu behind the security group
+        `product.group_product_variant`. On a brand-new database that group is
+        granted to nobody, so even the admin cannot reach Attributes — which we
+        need, because Coffin models are built from native product attributes
+        (wood, handles...). The old demo seed switched this on as a side effect
+        of creating attribute records; now that the demo is retired, a fresh DB
+        loses it. This record turns it back on, the proper way, in code.
+
+        HOW IT WORKS
+        `base.group_user` is the group EVERY internal/backend user belongs to
+        (the Owner included). A group can "imply" other groups via `implied_ids`
+        — any member of this group automatically also gets the implied ones.
+        We add `product.group_product_variant` to that list, so every backend
+        user (i.e. the Owner) gains the Variants feature, and the Attributes
+        menu shows up.
+
+        eval="[(4, ref(...))]" is Odoo's command syntax for one2many/many2many
+        fields: (4, id) means "LINK this existing record into the set" (without
+        removing what's already there). `ref(...)` looks up the numeric id of a
+        record from its xmlid.
+
+        This is loaded as DATA (not demo), so it applies on every install AND on
+        every `make reset` + reinstall — the durable fix the Owner asked for.
+    -->
+    <record id="base.group_user" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('product.group_product_variant'))]"/>
+    </record>
+</odoo>

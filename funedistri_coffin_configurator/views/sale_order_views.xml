@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Step 4.7 — surface the per-line Configured-coffin fields in the BACK OFFICE.
+
+  WHY this file exists.
+  Step 4 added death_date / delivery_date / engraving_text as real columns on
+  sale.order.line (see models/sale_order_line.py). The website cart captures
+  them, but the native Odoo sale order form has no idea these custom columns
+  exist, so the Owner opening an Order in the backend saw the line description
+  ("Gravure: Oui") but NOT the engraving text the Salesman typed, nor the dates.
+  The data was stored, just never rendered for the Owner. This view closes that
+  gap by inheriting the standard sale order form and adding the three fields to
+  the order-line list.
+
+  HOW it works (Odoo view inheritance).
+  We don't rewrite Odoo's form. We INHERIT it (inherit_id) and patch precise
+  spots with <xpath>. `arch_base` from the parent is loaded, our xpath edits are
+  applied on top. `sale.view_order_form` is the standard xmlid of the sale order
+  form; `//field[@name='order_line']/list` is the editable lines list inside it
+  (in Odoo 17+ the old <tree> tag was renamed <list>).
+
+  We add the fields as `optional="show"` columns: they render by default but the
+  Owner can toggle them off via the list's column picker, so non-coffin lines
+  (e.g. delivery) don't force clutter. They stay EDITABLE on purpose — CLAUDE.md
+  says the Owner can fully edit the draft before validating (the Salesman built
+  it blind to price), so the Owner may correct a typo'd engraving here. The
+  ≤20-char engraving rule is still enforced server-side by the @api.constrains
+  in the model, so editing here can't bypass it.
+-->
+<odoo>
+    <record id="view_order_form_coffin_config" model="ir.ui.view">
+        <field name="name">sale.order.form.coffin.config</field>
+        <field name="model">sale.order</field>
+        <!-- Parent = Odoo's standard sale order form. -->
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Add our custom columns right after the product cell so the
+                 coffin's captured config reads left-to-right with the product. -->
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_template_id']" position="after">
+                <field name="engraving_text" optional="show"/>
+                <field name="death_date" optional="show"/>
+                <field name="delivery_date" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
