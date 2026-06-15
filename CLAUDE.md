@@ -54,7 +54,14 @@ The detailed, resolved design is under **Design decisions** below.
 | Salesman / Store owner groups | `res.groups` | `coffin_salesman_group` / `coffin_store_owner_group` |
 | Owner notification | `mail.activity` (+ mail template) | activity primary, email nudge |
 
-# Design decisions (grilling session 2026-06-07)
+# Design decisions
+
+> **Source of truth = `docs/adr/` (ADRs) + `CONTEXT.md` (glossary).** The build
+> order is `docs/IMPLEMENTATION_PLAN.md`; the feature→files map is
+> `docs/FEATURE_MAP.md`. The notes below are background/rationale that predate the
+> 2026-06-15 reset — where an ADR exists it wins. (ADR index: 0001 price hiding ·
+> 0003 portal/login gate · 0004 native-only config, no reveal · 0005 locked address
+> book · 0006 single module by feature.)
 
 ## Repo & deployment
 - This repo **becomes the Odoo.sh addons repo**. The module lives in the repo, `git push` → Odoo.sh deploys. No separate copy step; local dev mirrors prod.
@@ -73,7 +80,9 @@ The detailed, resolved design is under **Design decisions** below.
 - **Backend visibility:** native `is_custom` values appear on the order line by default — no inherited view, no custom columns needed.
 - All of this runs on the **website frontend** (`website_sale`), because B2B users never touch the backend.
 
-> ⚠️ **Code cleanup pending:** the dropped layer still exists in code (`models/coffin_config_rule.py`, `models/sale_order_line.py` custom fields, `static/src/js/coffin_cart_fields.js`, `views/cart_templates.xml` custom fields, the `sale_order_views.xml` columns, `security/ir.model.access.csv` for the rule, `tests/test_reveal_rules.py`) and is wired at submit (`_validate_reveal_rules()` in `controllers/main.py`). Executing ADR 0004 = removing all of it. Docs updated 2026-06-15; code removal is the follow-up.
+> The dropped reveal layer (`coffin.config.rule`, custom line fields, reveal JS) was
+> removed in the 2026-06-15 reset. The whole module is now an empty shell, rebuilt
+> per `docs/IMPLEMENTATION_PLAN.md`; coffin config is native attributes only.
 
 ## Roles & price visibility
 - See Terminology. Owner = backend only. SALESMAN / STORE_OWNER = portal users, frontend only.
@@ -112,8 +121,7 @@ The detailed, resolved design is under **Design decisions** below.
 - **Docker Compose**: official `odoo:19` image + `postgres:16` (Odoo 19 needs PG 14+). `docker compose up`.
 - **`make dev`** = boot Postgres + Odoo, create a fresh DB, **auto-install the module + deps** (`website_sale`, `sale` via manifest `depends`), run in dev mode (`--dev=all`, hot-reload of XML/Python).
 - **Repo layout**: the module dir(s) at the **repo root** (Odoo.sh treats each top-level dir with `__manifest__.py` as a module). Dev-only files (`Makefile`, `docker-compose.yml`, `odoo.conf`) sit alongside; Odoo.sh ignores anything without a manifest.
-- **Demo seed = YES** (Odoo `demo` data, loads only in the dev DB, never prod): one customer company + one SALESMAN + one STORE_OWNER portal user + one configurable coffin with a few priced/image/text/date options. So every `make dev` gives a clickable store to test roles + config.
+- **Local seed = the separate `funedistri_dev_seed` module** (NOT Odoo `demo` data; global demo stays off). `make dev` installs it alongside the main module; prod never does. After the 2026-06-15 reset it seeds only `seed_coffin_attributes.xml` (a configurable coffin); the test B2B companies/users return when step 2 re-adds `b2b_role`. See `funedistri_dev_seed/__manifest__.py`.
 
-# Open questions (next session)
-1. **Verify the real Odoo version** of `funedistri.odoo.com`. CONFIRMED: 19.2 (2026-06-10).
-2. Confirm whether a prod DB dump is wanted for local testing (default: no — the demo seed is enough to start).
+# Open questions
+- Tracked in `docs/IMPLEMENTATION_PLAN.md` (step 6): **stock draw-down** (native BoM/MO vs custom — see `docs/explore-bom-mo.md`) and **orphan-user order visibility**. Each gets its own grilling session.

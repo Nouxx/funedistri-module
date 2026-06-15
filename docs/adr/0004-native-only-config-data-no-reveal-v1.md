@@ -1,84 +1,41 @@
 # 4. v1 captures all config data with native attributes; no conditional reveal
 
-Date: 2026-06-14
-
-## Status
-
-Accepted (supersedes [ADR 0002](./0002-dedicated-model-for-conditional-reveal-rules.md)).
-**Reaffirmed 2026-06-15** — see "Reaffirmation" below.
-
-## Context
-
-Steps 3–4 built a hybrid configurator: native `product.attribute` for priced,
-discrete choices (wood, handles), **plus** a custom layer for the rest — custom
-`sale.order.line` fields (`engraving_text`, `death_date`, `delivery_date`), a
-dedicated `coffin.config.rule` model for one-level conditional reveal (ADR 0002),
-and a JS snippet that shows/hides cart fields from those rules.
-
-Reassessing scope for v1 (new-context.md, 2026-06-14), the Owner wants **all**
-per-line configuration data captured with native Odoo Product Attributes —
-explicitly "not perfect but it will do the job for v1" — and is willing to drop
-the conditional behaviour the custom layer existed to provide. The custom layer
-is the most code, the most Odoo-upgrade risk, and the part that fights the
-framework hardest (the cart-page JS, the rule model, the form-view columns).
-
-The deciding facts:
-
-- Native attributes support an `is_custom` value → a free-text box captured on the
-  order line (`product_custom_attribute_value_ids`), shown natively on the backend
-  order line. This covers engraving text and the dates **as free text**.
-- Native attributes have **no conditional reveal** (only mutually-exclusive
-  exclusion rules) — so going native means accepting always-visible fields.
-- The Owner already fully edits every draft Order before Validating; he is a
-  reliable backstop for the nonsense native can't prevent.
+Date: 2026-06-14 · Status: Accepted, reaffirmed 2026-06-15
 
 ## Decision
 
-For v1, **all per-line configuration data is native Product Attributes, and there
-is no conditional reveal.** The entire custom config layer is removed.
+For v1, **all per-line coffin configuration data is native Product Attributes, and
+there is no conditional reveal.** No custom config layer.
 
-- **Priced/discrete options** (wood, handles, plaque type) → native attributes
-  with `price_extra`, exactly as today.
-- **Engraving text** → a native `is_custom` text value. **No ≤20-char
-  enforcement** — the Owner trims to fit the plate at Validate.
-- **Death date / Delivery date** → native `is_custom` **free-text** values. No
-  date picker, no validation, no typed field. The Owner reads and corrects them
-  at Validate. (Death date is engraved, so a malformed date is the Owner's catch.)
-- **Conditional reveal is dropped.** All fields are always visible. A Salesman can
-  select "no plaque" and still type a plaque name; that contradiction is **not**
-  prevented by the system — the Owner fixes it at Validate.
-- **Removed:** `coffin.config.rule` (model, security, demo rules), the reveal JS
-  (`coffin_cart_fields.js`), the custom `sale.order.line` fields and their
-  `@api.constrains`, the cart custom-field template, and the custom columns added
-  to the backend sale-order form for those fields.
+- **Priced/discrete options** (wood, handles, plaque type) → native attributes with
+  `price_extra`.
+- **Engraving text, Death date, Delivery date** → native `is_custom` **free-text**
+  values (`product_custom_attribute_value_ids`, shown natively on the backend order
+  line). No typed Date field, no length limit, no format validation.
+- **Conditional reveal is dropped.** All fields are always visible — a buyer can pick
+  "no plaque" and still type a plaque name; that contradiction is **not** prevented.
+  The **Owner is the single validation backstop** and fixes it at Validate.
 
-## Consequences
+## Why
 
-- Far less code and near-zero custom surface for config data → much lower
-  Odoo-upgrade risk, the stated v1 goal.
-- The Owner becomes the **single validation backstop** for config-data integrity
-  (date sanity, engraving length, plaque/name coherence). Acceptable because he
-  already edits every draft before Validating, and the user base is small/curated.
-- Lost vs. the hybrid: typed dates, length enforcement, and the plaque→name-
-  required guarantee. Revisit post-v1 — ADR 0002 holds the design to revive.
-- Glossary terms **Death date**, **Delivery date**, **Engraving text** now denote
-  free-text option values, not typed/validated fields; **Reveal rule** is retired
-  for v1. CONTEXT.md updated accordingly.
+The Owner wants config data captured natively — "not perfect but it does the job for
+v1" — and will drop the conditional behaviour. The custom layer (a `coffin.config.rule`
+model + reveal JS + custom line fields) was the most code, the most Odoo-upgrade risk,
+and the part that fought the framework hardest. Native covers the data as free text;
+native has **no** conditional reveal (only mutually-exclusive exclusion rules), so
+going native means accepting always-visible fields. Acceptable because the Owner
+already fully edits every draft before Validating, and the user base is small/curated.
 
 ## Reaffirmation (2026-06-15)
 
-After this ADR was accepted, `new-context.md` re-opened conditional reveal (the
-"plaque chosen → plaque name must be provided" example), arguing always-visible
-fields are nonsensical UX. We grilled it and **rejected the re-open**: coffin
-configuration is done **exclusively with native Product Attributes, with no
-conditional reveal**, full stop for v1. The plaque-name contradiction is accepted
-and handled by the Owner at Validate, exactly as this ADR's "single validation
-backstop" already states.
+After this was accepted, conditional reveal was re-opened (the "plaque chosen → plaque
+name must be provided" example) on the grounds that always-visible fields are
+nonsensical UX. **Rejected** — native attributes only, no reveal, full stop for v1.
 
-Note for whoever revives reveal post-v1: the want had **shifted** since ADR 0002.
-0002 designed reveal over **custom** line fields; the re-open wanted reveal over
-**native** attribute data. Native `is_custom` values give "same-value reveal" for
-free (mark a value `is_custom` → a text box appears when it's picked), but never
+Revival note (post-v1): the dropped design was a dedicated `coffin.config.rule` model
++ reveal JS over **custom** `sale.order.line` fields. The re-open instead wanted reveal
+over **native** attribute data. Native `is_custom` values already give "same-value
+reveal" for free (pick an `is_custom` value → its text box appears), but never
 *required* and never *cross-attribute* (e.g. engraving=yes → a separate death-date
-field). Those two gaps are the only things a custom layer would buy — weigh them
-against the upgrade-risk cost before reviving.
+field). Those two gaps are the only things a custom layer buys — weigh them against the
+upgrade-risk cost before reviving.

@@ -1,4 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_coffin_config_rule_public,coffin.config.rule public read,model_coffin_config_rule,base.group_public,1,0,0,0
-access_coffin_config_rule_portal,coffin.config.rule portal read,model_coffin_config_rule,base.group_portal,1,0,0,0
-access_coffin_config_rule_internal,coffin.config.rule internal full,model_coffin_config_rule,base.group_user,1,1,1,1
