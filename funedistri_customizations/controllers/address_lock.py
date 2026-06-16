@@ -48,6 +48,23 @@ def _allowed_partner_ids(order_sudo, addr_type):
 
 class CoffinAddressLock(WebsiteSale):
 
+    def _prepare_address_data(self, partner_sudo, **kwargs):
+        # Native lists the user's OWN contact + the commercial partner + 'other'
+        # types as selectable addresses. For a B2B user that own-address card is
+        # redundant with (and wrong-typed vs) the company's Invoice/Delivery
+        # contacts. Restrict the lists to exactly the company's Invoice contacts
+        # (billing) and Delivery contacts (shipping) — hides the own address and
+        # enforces the type rule in the UI too.
+        data = super()._prepare_address_data(partner_sudo, **kwargs)
+        if request.env.user._coffin_is_b2b_user():
+            commercial = partner_sudo.commercial_partner_id
+            Partner = request.env['res.partner'].sudo()
+            data['billing_addresses'] = Partner.search([
+                ('id', 'child_of', commercial.id), ('type', '=', 'invoice')])
+            data['delivery_addresses'] = Partner.search([
+                ('id', 'child_of', commercial.id), ('type', '=', 'delivery')])
+        return data
+
     def _check_cart_and_addresses(self, order_sudo):
         if order_sudo and _b2b():
             if self._coffin_enforce_company_addresses(order_sudo):

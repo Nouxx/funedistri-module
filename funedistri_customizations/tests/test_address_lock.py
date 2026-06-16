@@ -105,6 +105,19 @@ class TestAddressLock(CoffinFixtureMixin, HttpCase):
         with self.assertRaises(Exception):
             self._update_address(self.rogue_addr, 'delivery')
 
+    def test_own_address_hidden_at_checkout(self):
+        # The checkout address lists show only the company's Invoice/Delivery
+        # contacts — never the logged-in user's own contact (redundant).
+        self._login_with_cart()
+        html = self.url_open('/shop/checkout', allow_redirects=True).text
+        card_ids = set(re.findall(r'data-partner-id="(\d+)"', html))
+        self.assertIn(str(self.delivery_addr.id), card_ids,
+                      "company delivery address must be selectable")
+        self.assertIn(str(self.invoice_addr.id), card_ids,
+                      "company invoice address must be selectable")
+        self.assertNotIn(str(self.salesman.partner_id.id), card_ids,
+                         "the user's own contact must NOT be a selectable address")
+
 
 @tagged('post_install', '-at_install')
 class TestAddressBlockOnMissing(CoffinFixtureMixin, HttpCase):
