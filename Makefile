@@ -12,7 +12,22 @@ MODULE := funedistri_customizations
 # never on Odoo.sh. See funedistri_dev_seed/__manifest__.py for the why.
 SEED := funedistri_dev_seed
 
-.PHONY: dev down reset logs
+.PHONY: dev down reset logs test
+
+# Throwaway DB for the test suite (kept separate from the dev DB).
+TESTDB ?= funedistri_test
+
+test: ## Run the module test suite on a throwaway DB, then exit.
+	docker compose up -d db
+	# Drop + recreate so each run is clean. --db-filter='.*' is REQUIRED: odoo.conf
+	# pins dbfilter to ^funedistri$, which would otherwise log HttpCase sessions
+	# out of $(TESTDB) (sessions get "dbfilter rejects it"). --test-tags limits to
+	# our module so Odoo's own (browser) tests don't run/hang.
+	-docker compose exec -T db dropdb -U odoo --if-exists $(TESTDB)
+	docker compose run --rm -T odoo \
+		odoo -d $(TESTDB) --db-filter='.*' -i $(MODULE),$(SEED) \
+		--without-demo --stop-after-init --test-enable \
+		--test-tags /$(MODULE) --log-level=test
 
 dev: ## Boot PG + Odoo, (re)install the module, hot-reload XML/Python.
 	# Bring up Postgres in the background first so it is ready for Odoo.

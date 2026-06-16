@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Step 4 — price masking for the SALESMAN (ADR 0001), render-side half.
+
+  A Salesman places orders blind to price; a Store owner of the same company sees
+  prices. Across the interactive shopping surfaces (shop grid, product page, cart,
+  checkout totals) and the portal order list, a Salesman gets a "Prix masqué"
+  placeholder instead of any number. The JSON-route half (so the real number is
+  never emitted in the cart/checkout JSON either) + the portal order DETAIL/PDF
+  block live in controllers/price_masking.py.
+
+  Mechanism: the `groups` attribute. Odoo strips any node whose `groups` the
+  current user is NOT in; a leading `!` negates. So the REAL price node is tagged
+  `groups="!...coffin_salesman_group"` (everyone EXCEPT a salesman renders it) and
+  a sibling placeholder `groups="...coffin_salesman_group"` (only a salesman). This
+  is purely server-side: for a salesman the number node is never emitted into the
+  HTML — not hidden by CSS (that would fail the ADR 0001 guardrail).
+-->
+<odoo>
+
+    <!-- The placeholder a Salesman sees in place of any price. Defined once,
+         t-call'd from every masked surface so wording/tooltip live in ONE place. -->
+    <template id="coffin_price_masked" name="Coffin: masked price placeholder">
+        <span
+            class="text-muted fst-italic coffin-price-masked"
+            title="Prix masqué : en tant que commercial vous commandez sans voir les prix. Le gérant du magasin (Store owner) voit les prix."
+        >Prix masqué</span>
+    </template>
+
+    <!-- 1) PRODUCT PRICE — shared by the /shop grid tile AND the product page
+         (both t-call 'website_sale.product_price'). -->
+    <template id="product_price_salesman_mask" inherit_id="website_sale.product_price">
+        <xpath expr="//div[@name='product_price_container']" position="attributes">
+            <attribute name="groups">!funedistri_customizations.coffin_salesman_group</attribute>
+        </xpath>
+        <xpath expr="//div[@name='product_price_container']" position="after">
+            <div
+                groups="funedistri_customizations.coffin_salesman_group"
+                class="css_editable_mode_hidden h5 mb-0"
+            >
+                <t t-call="funedistri_customizations.coffin_price_masked"/>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- 2) CART LINE PRICE — the per-line price block on the cart page. -->
+    <template id="cart_line_price_salesman_mask" inherit_id="website_sale.cart_lines_price">
+        <xpath expr="//h6[@name='website_sale_cart_line_price']" position="attributes">
+            <attribute name="groups">!funedistri_customizations.coffin_salesman_group</attribute>
+        </xpath>
+        <xpath expr="//h6[@name='website_sale_cart_line_price']" position="after">
+            <h6 groups="funedistri_customizations.coffin_salesman_group" class="mb-1">
+                <t t-call="funedistri_customizations.coffin_price_masked"/>
+            </h6>
+        </xpath>
+    </template>
+
+    <!-- 3) CART / CHECKOUT TOTALS — the totals table. -->
+    <template id="total_salesman_mask" inherit_id="website_sale.total">
+        <xpath expr="//div[contains(@t-attf-class, 'o_cart_total')]" position="attributes">
+            <attribute name="groups">!funedistri_customizations.coffin_salesman_group</attribute>
+        </xpath>
+        <xpath expr="//div[contains(@t-attf-class, 'o_cart_total')]" position="after">
+            <div
+                groups="funedistri_customizations.coffin_salesman_group"
+                t-if="website_sale_order and website_sale_order.website_order_line"
+                t-attf-class="o_cart_total #{_cart_total_classes}"
+            >
+                <t t-call="funedistri_customizations.coffin_price_masked"/>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- 4) PORTAL ORDER LIST (/my/orders) — the "Total" column. -->
+    <template id="portal_my_orders_salesman_mask" inherit_id="sale.portal_my_orders">
+        <xpath expr="//td[@name='order_amount_total']/span" position="attributes">
+            <attribute name="groups">!funedistri_customizations.coffin_salesman_group</attribute>
+        </xpath>
+        <xpath expr="//td[@name='order_amount_total']" position="inside">
+            <t
+                groups="funedistri_customizations.coffin_salesman_group"
+                t-call="funedistri_customizations.coffin_price_masked"
+            />
+        </xpath>
+    </template>
+
+</odoo>

@@ -59,12 +59,23 @@ self-signup** via `auth_signup.invitation_scope='b2b'`. See `data/login_gate.xml
   stays published for B2B and is unreachable by the public.
 - Refs: ADR 0003.
 
-### Step 4 — Price masking
-A **Salesman** sees **no price anywhere**: product, cart, checkout, portal history
-(render + the JSON cart/checkout routes), a **bare** confirmation email, and a
-**blocked** quote PDF. Server-rendered placeholder ("Prix masqué") + tooltip; branch
-on `has_group()` for interactive requests, on the **order partner's role** for async
-renders (email/PDF). Practical, not adversary-proof.
+### Step 4 — Price masking ✅ (done 2026-06-16)
+A **Salesman** sees **no price anywhere**, practical not adversary-proof (ADR 0001):
+- **Render** (QWeb `groups=` → "Prix masqué" placeholder): shop grid, product page,
+  cart line, cart/checkout totals, portal order list.
+- **JSON routes** (server never emits the number): `/shop/cart/add|update` zeroed,
+  `/shop/set_delivery_method` + `/shop/get_delivery_rate` placeholder'd.
+- **Portal order detail + PDF/report**: BLOCKED for a Salesman (redirect to the
+  order list) rather than masking ~15 fragile price nodes — v1 simplification; a
+  masked detail page is a possible later refinement.
+- **JS**: `coffin_checkout_mask.js` keeps the checkout Confirm button usable once
+  the totals table is masked away.
+- **Email**: N/A — flow A sends the Salesman no order email (only the Owner is
+  notified), so there is nothing to mask.
+- Interactive surfaces branch on the viewer's `has_group()`. The async/owner-context
+  email+PDF branch-on-order-partner case from ADR 0001 isn't needed in flow A.
+- Tests: `test_price_masking.py` (HttpCase). Run with `make test` (needs
+  `--db-filter='.*'`; baked into the target).
 - Refs: ADR 0001.
 
 ### Step 5 — Locked company address book

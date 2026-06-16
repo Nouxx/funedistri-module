@@ -3,3 +3,4 @@
 # flow (the "Valider la commande" route + the portal Pending listing).
 from . import submit_order
 from . import shop_access
+from . import price_masking

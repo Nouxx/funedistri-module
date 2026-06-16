@@ -32,6 +32,7 @@ steps land (see `docs/IMPLEMENTATION_PLAN.md`).
 | **Order visibility** (company-scoped, orphan sees none) | — (native `commercial_partner_id` scoping) | — | — | — | — | `test_order_visibility.py` | 0003 | 2 |
 | **Login gate** (shop gated to logged-in; no public signup; portal = backend lockout) | — (native `website.ecommerce_access`) | — | — | `data/login_gate.xml` (`ecommerce_access='logged_in'` + `auth_signup.invitation_scope='b2b'`) | — | `test_login_gate.py` | 0003 | 3 |
 | **Shop access** (only configured B2B users/staff shop; orphan → /my, no loop) | `res_users.py` (`_coffin_can_shop`) | — | `shop_access.py` (guards `shop`/`product`/`cart`) | — | — | `test_shop_access.py` | 0003 | 3 |
+| **Price masking** (Salesman sees no price: render + JSON routes + portal-detail/PDF block) | — | `price_visibility_templates.xml` (`groups=` placeholder on product/cart/totals/portal-list) | `price_masking.py` (`CoffinCart`, `CoffinDelivery` zero JSON amounts; `CoffinSalePortalMasking` blocks order detail/PDF) | — | `coffin_checkout_mask.js` | `test_price_masking.py` (+ `tests/common.py`) | 0001 | 4 |
 
 Dev seed (local only, in `funedistri_dev_seed`): `seed_coffin_attributes.xml` +
 `seed_coffin_product.xml` give a published, configurable "Cercueil Taica" to build

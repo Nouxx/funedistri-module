@@ -47,8 +47,18 @@
         "data/mail_template_owner_order.xml",
         # Submit button + Pending confirmation + portal status badge.
         "views/submit_order_templates.xml",
+        # --- Price masking (Step 4) ---
+        # Render-side "Prix masqué" placeholder across shop/cart/checkout/portal
+        # list for the Salesman (JSON-route + portal-detail half is in Python).
+        "views/price_visibility_templates.xml",
     ],
-    "assets": {},
+    "assets": {
+        "web.assets_frontend": [
+            # Step 4: keep the checkout Confirm button usable when the totals
+            # table is masked away for a Salesman (see the file header).
+            "funedistri_customizations/static/src/js/coffin_checkout_mask.js",
+        ],
+    },
     # NO demo data. Local dev test records live in the separate, local-only
     # funedistri_dev_seed module (installed by `make dev`, never on prod).
     "application": False,
