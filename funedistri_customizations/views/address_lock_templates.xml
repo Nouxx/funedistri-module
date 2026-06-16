@@ -17,4 +17,13 @@
             <attribute name="groups">!funedistri_customizations.coffin_salesman_group,!funedistri_customizations.coffin_store_owner_group</attribute>
         </xpath>
     </template>
+
+    <!-- Same for the BILLING picker (Step 5b: billing is locked too). Its add
+         button uses t-attf-class (dynamic), so hasclass() can't match it — target
+         it by its t-att-href instead. -->
+    <template id="billing_address_list_lock" inherit_id="website_sale.billing_address_list">
+        <xpath expr="//a[@t-att-href='new_address_url']" position="attributes">
+            <attribute name="groups">!funedistri_customizations.coffin_salesman_group,!funedistri_customizations.coffin_store_owner_group</attribute>
+        </xpath>
+    </template>
 </odoo>

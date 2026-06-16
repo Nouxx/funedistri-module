@@ -1,109 +1,117 @@
 # -*- coding: utf-8 -*-
-"""Locked company address book (Step 5, ADR 0005).
+"""Locked company address book (ADR 0005, Step 5 + 5b).
 
-A B2B user may only SELECT among their Customer company's Owner-defined DELIVERY
-addresses at checkout — never create or edit one (negotiated shipping rates apply
-only to vetted addresses; a new address could break margin). Scope = the delivery
-address only; the billing/invoice address keeps native behaviour.
+A B2B user (Salesman or Store owner) may **never create or edit any address** — at
+checkout or in the portal. They may only SELECT among their Customer company's
+Owner-defined addresses, with a strict type separation:
+  - shipping  ← company *Delivery*-type child contacts only;
+  - billing   ← company *Invoice*-type child contacts only;
+and the two never cross. Their own contact is neither type, so it is never an order
+address. Guards negotiated-shipping margin + billing correctness, so SERVER-enforced
+(a UI hide alone is insufficient — a crafted request must be refused):
 
-This guards real money, so it is SERVER-enforced (ADR 0005), not just a UI hide
-(the "Add Address" button is also hidden — views/address_lock_templates.xml — but
-that is UX; a crafted request must still be refused here):
-
-  - shop_address (GET form)     → blocked for a B2B user on delivery (and on a
-                                  "use delivery as billing" create, which would
-                                  set a new delivery too). Redirects to checkout.
-  - shop_address/submit (POST)  → same, refused (Forbidden) so a crafted create/
-                                  edit cannot slip a new delivery address in.
-  - shop_update_address (select)→ the chosen delivery address must be one of the
-                                  company's Owner-defined delivery addresses; a
-                                  rogue id is refused (Forbidden).
-
-"Company address" = a native child contact of the company `res.partner` with
-``type='delivery'`` (the Owner creates them in the backend). No custom model.
+  checkout (website_sale):
+   - shop_address (GET) / shop_address/submit (POST) → refused for ANY address
+     (no create/edit at all);
+   - shop_update_address → the chosen address must be in the company's allowed set
+     OF THE RIGHT TYPE (delivery↔Delivery, billing↔Invoice);
+   - _check_cart_and_addresses → auto-assign the first company address of each type
+     (so the selection list shows, no loop to the blocked form), and BLOCK checkout
+     if the company lacks a Delivery or an Invoice address.
+  portal (portal):
+   - portal_address (GET) / portal_address/submit (POST) / address_archive → refused.
+     (/my/account login-profile editing is left alone; /my/addresses stays viewable.)
 """
 
 from werkzeug.exceptions import Forbidden
 
 from odoo.http import request, route
-from odoo.tools import str2bool
 
 from odoo.addons.website_sale.controllers.main import WebsiteSale
+from odoo.addons.portal.controllers.portal import CustomerPortal
 
 
-def _delivery_locked():
-    """True when the current user is a B2B user whose delivery address is locked."""
+def _b2b(self_or_none=None):
+    """True when the current user is a B2B user (locked out of editing addresses)."""
     return request.env.user._coffin_is_b2b_user()
 
 
-def _allowed_delivery_partner_ids(order_sudo):
-    """IDs of the company's Owner-defined delivery addresses (the only selectable
-    delivery addresses for a B2B user)."""
+def _allowed_partner_ids(order_sudo, addr_type):
+    """IDs of the company's Owner-defined addresses of the given contact type
+    ('delivery' or 'invoice') — the only ones a B2B user may select for that slot."""
     commercial = order_sudo.partner_id.commercial_partner_id
     return set(request.env['res.partner'].sudo()._search([
         ('id', 'child_of', commercial.id),
-        ('type', '=', 'delivery'),
+        ('type', '=', addr_type),
     ]))
 
 
 class CoffinAddressLock(WebsiteSale):
 
     def _check_cart_and_addresses(self, order_sudo):
-        # A B2B user cannot create a delivery address, so the order must already
-        # carry one of the company's. If it doesn't (e.g. it still defaults to the
-        # user's own contact), assign the first company delivery address — else
-        # native would redirect to the (blocked) create form and loop. The user
-        # can then switch among the company's addresses via the checkout list.
-        if _delivery_locked() and order_sudo:
-            allowed = _allowed_delivery_partner_ids(order_sudo)
-            if allowed and order_sudo.partner_shipping_id.id not in allowed:
-                order_sudo._update_address(min(allowed), ['partner_shipping_id'])
+        if order_sudo and _b2b():
+            if block := self._coffin_enforce_company_addresses(order_sudo):
+                return block
         return super()._check_cart_and_addresses(order_sudo)
 
-    def shop_address(
-        self, partner_id=None, address_type='billing', use_delivery_as_billing=None,
-        **query_params
-    ):
-        # A B2B user cannot open the add/edit form for a delivery address (nor a
-        # "use delivery as billing" create, which would set a new delivery too).
-        if _delivery_locked() and (
-            address_type == 'delivery'
-            or str2bool(use_delivery_as_billing or 'false')
-        ):
-            return request.redirect('/shop/checkout')
-        return super().shop_address(
-            partner_id=partner_id, address_type=address_type,
-            use_delivery_as_billing=use_delivery_as_billing, **query_params)
+    def _coffin_enforce_company_addresses(self, order_sudo):
+        """Force the order's billing (and shipping, if deliverable) onto a company
+        address of the right type. Returns a redirect (hard stop) when the company
+        lacks a required address type, else None."""
+        # Billing is always required.
+        invoice_ids = _allowed_partner_ids(order_sudo, 'invoice')
+        if not invoice_ids:
+            return request.redirect('/shop/cart')  # Owner must define an invoice addr
+        if order_sudo.partner_invoice_id.id not in invoice_ids:
+            order_sudo._update_address(min(invoice_ids), ['partner_invoice_id'])
+        # Shipping only for deliverable carts (coffins are goods → deliverable).
+        if not order_sudo.only_services:
+            delivery_ids = _allowed_partner_ids(order_sudo, 'delivery')
+            if not delivery_ids:
+                return request.redirect('/shop/cart')  # Owner must define a delivery addr
+            if order_sudo.partner_shipping_id.id not in delivery_ids:
+                order_sudo._update_address(min(delivery_ids), ['partner_shipping_id'])
+        return None
 
-    def shop_address_submit(
-        self, partner_id=None, address_type='billing', use_delivery_as_billing=None,
-        callback=None, **form_data
-    ):
-        # Refuse any create/edit that would touch the delivery address for a B2B
-        # user — even via a crafted POST that skipped the (hidden/blocked) form.
-        if _delivery_locked() and (
-            address_type == 'delivery'
-            or str2bool(use_delivery_as_billing or 'false')
-        ):
-            raise Forbidden(
-                "Delivery addresses are managed by Funedistri; "
-                "you may only select an existing one.")
-        return super().shop_address_submit(
-            partner_id=partner_id, address_type=address_type,
-            use_delivery_as_billing=use_delivery_as_billing, callback=callback,
-            **form_data)
+    def shop_address(self, **kw):
+        # A B2B user edits no address: block the add/edit form for any type.
+        if _b2b():
+            return request.redirect('/shop/checkout')
+        return super().shop_address(**kw)
+
+    def shop_address_submit(self, **kw):
+        # Refuse any create/edit (even a crafted POST that skipped the blocked form).
+        if _b2b():
+            raise Forbidden("Addresses are managed by Funedistri; "
+                            "you may only select an existing one.")
+        return super().shop_address_submit(**kw)
 
     @route('/shop/update_address', type='jsonrpc', auth='public', website=True)
     def shop_update_address(self, partner_id, address_type='billing', **kw):
-        # For a B2B user, the chosen DELIVERY address must be one the Owner defined
-        # for the company. (Native only checks "is a child contact" and allows any
-        # type — too loose for the negotiated-shipping rule.)
-        if (
-            address_type == 'delivery'
-            and _delivery_locked()
-            and (order_sudo := request.cart)
-            and int(partner_id) not in _allowed_delivery_partner_ids(order_sudo)
-        ):
-            raise Forbidden("This delivery address is not allowed for your company.")
-        return super().shop_update_address(
-            partner_id, address_type=address_type, **kw)
+        if _b2b() and (order_sudo := request.cart):
+            wanted = 'invoice' if address_type == 'billing' else 'delivery'
+            if int(partner_id) not in _allowed_partner_ids(order_sudo, wanted):
+                raise Forbidden(
+                    "This address is not an allowed %s address for your company."
+                    % address_type)
+        return super().shop_update_address(partner_id, address_type=address_type, **kw)
+
+
+class CoffinPortalAddressLock(CustomerPortal):
+    """Block address create/edit in the portal too (the checkout lock would be
+    pointless if a B2B user could edit the same addresses under /my)."""
+
+    def portal_address(self, **kw):
+        if _b2b():
+            return request.redirect('/my/addresses')  # view-only, no add/edit form
+        return super().portal_address(**kw)
+
+    def portal_address_submit(self, **kw):
+        if _b2b():
+            raise Forbidden("Addresses are managed by Funedistri.")
+        return super().portal_address_submit(**kw)
+
+    def address_archive(self, partner_id):
+        if _b2b():
+            raise Forbidden("Addresses are managed by Funedistri.")
+        return super().address_archive(partner_id)

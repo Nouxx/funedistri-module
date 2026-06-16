@@ -91,9 +91,8 @@ contacts; they must be complete — name/email/phone/address — or native would
 redirect to edit them).
 - Refs: ADR 0005.
 
-#### Step 5b — Address rules extended (designed 2026-06-16, not yet built)
-ADR 0005 was extended (see its 2026-06-16 note + CONTEXT.md). The **delivery** half
-shipped (above); still to build:
+#### Step 5b — Address rules extended ✅ (done 2026-06-16)
+ADR 0005 extended (see its 2026-06-16 note + CONTEXT.md). Built:
 - **Billing locked too**: selectable only among the company's *Invoice*-type
   contacts; block billing create/edit at checkout (mirror the delivery controller).
 - **Strict type separation**: shipping list = *Delivery* only (done), billing list =

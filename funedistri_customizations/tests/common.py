@@ -109,6 +109,11 @@ class CoffinFixtureMixin:
             'email': 'funerarium@test-pf.example.com', 'phone': '+33240000099',
             **address,
         })
+        invoice_addr = env['res.partner'].create({
+            'name': 'Compta Test', 'parent_id': company.id, 'type': 'invoice',
+            'email': 'compta@test-pf.example.com', 'phone': '+33240000098',
+            **address,
+        })
         rogue_addr = env['res.partner'].create({
             'name': 'Rogue Address', 'type': 'delivery',
             'street': '99 rue Pirate', 'city': 'Paris', 'zip': '75001',
@@ -121,4 +126,5 @@ class CoffinFixtureMixin:
         cls.store_owner = store_owner
         cls.salesman = salesman
         cls.delivery_addr = delivery_addr
+        cls.invoice_addr = invoice_addr
         cls.rogue_addr = rogue_addr

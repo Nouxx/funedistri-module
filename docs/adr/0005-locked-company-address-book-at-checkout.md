@@ -47,7 +47,6 @@ price of the hard type separation.
 
 This extends the original (delivery-only, invoice native) scope to **both** address
 types + the **portal** surface + the **strict type separation** + **block-on-missing**.
-Step 5 shipped the delivery half; the invoice half, the portal lock, and the
-block-on-missing are the follow-up implementation. The glossary term **Company
-address** (CONTEXT.md) now covers both **Company delivery address** and **Company
-invoice address**.
+**Built** (Step 5 = delivery half; Step 5b = invoice lock + portal lock + type
+separation + block-on-missing). The glossary term **Company address** (CONTEXT.md) now
+covers both **Company delivery address** and **Company invoice address**.
