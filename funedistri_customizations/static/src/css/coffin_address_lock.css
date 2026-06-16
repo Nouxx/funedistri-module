@@ -6,7 +6,11 @@
    (add / edit / remove), never the address cards themselves (still selectable). */
 .coffin-addr-locked .o_address_card_add_new,
 .coffin-addr-locked .js_edit_address,
-.coffin-addr-locked .o_remove_address {
+.coffin-addr-locked .o_remove_address,
+/* "Same as delivery address" toggle — would set billing to a delivery address,
+   breaking the Invoice/Delivery separation, so it's disabled for B2B users too. */
+.coffin-addr-locked #use_delivery_as_billing,
+.coffin-addr-locked #use_delivery_as_billing_label {
     pointer-events: none;
     opacity: 0.45;
     cursor: not-allowed;

@@ -62,6 +62,14 @@ class TestAddressLock(CoffinFixtureMixin, HttpCase):
             self.make_jsonrpc_request('/my/address/archive',
                                       {'partner_id': self.invoice_addr.id})
 
+    def test_checkout_billing_block_marked_disabled(self):
+        # The checkout billing block is marked so CSS disables the "Same as
+        # delivery address" toggle for a B2B user.
+        self._login_with_cart()
+        html = self.url_open('/shop/checkout', allow_redirects=True).text
+        self.assertIn('coffin-addr-locked', html,
+                      "checkout billing block must be marked disabled for B2B")
+
     def test_portal_address_controls_visually_disabled(self):
         # The /my/addresses action controls are marked disabled for a B2B user
         # (the CSS class on the section drives the visual disable).
