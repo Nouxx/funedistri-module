@@ -18,8 +18,22 @@
          being /shop/checkout, so the cart's own button (same template) stays
          enabled. -->
     <template id="navigation_buttons_lock" inherit_id="website_sale.navigation_buttons">
+        <!-- coffin_blocked: on the address step, a B2B user whose company lacks a
+             required address. Disable the continue button AND make it genuinely
+             unclickable — class 'disabled' (pointer-events:none) is not enough for
+             an <a> (keyboard / href still work), so we also neutralise href and set
+             aria-disabled/tabindex. -->
+        <xpath expr="//a[@name='website_sale_main_button']" position="before">
+            <t t-set="coffin_blocked"
+               t-value="current_website_checkout_step_href == '/shop/checkout'
+                        and request.env.user._coffin_is_b2b_user()
+                        and website_sale_order._coffin_addresses_blocked()"/>
+        </xpath>
         <xpath expr="//a[@name='website_sale_main_button']" position="attributes">
-            <attribute name="t-attf-class">btn btn-primary #{(not website_sale_order._is_cart_ready() or (current_website_checkout_step_href == '/shop/checkout' and request.env.user._coffin_is_b2b_user() and website_sale_order._coffin_addresses_blocked())) and 'disabled'} w-100</attribute>
+            <attribute name="t-attf-class">btn btn-primary #{(not website_sale_order._is_cart_ready() or coffin_blocked) and 'disabled'} w-100</attribute>
+            <attribute name="t-att-href">'#' if coffin_blocked else next_website_checkout_step_href</attribute>
+            <attribute name="t-att-aria-disabled">coffin_blocked and 'true' or None</attribute>
+            <attribute name="t-att-tabindex">coffin_blocked and '-1' or None</attribute>
         </xpath>
     </template>
 

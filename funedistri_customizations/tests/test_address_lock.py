@@ -140,10 +140,14 @@ class TestAddressBlockOnMissing(CoffinFixtureMixin, HttpCase):
         self.assertTrue(resp.url.endswith('/shop/checkout'))
         # Explanatory notice shown.
         self.assertIn('Aucune adresse de facturation', resp.text)
-        # The continue button is rendered disabled.
+        # The continue button is rendered disabled AND genuinely unclickable
+        # (aria-disabled + href neutralised), not just greyed.
         self.assertTrue(
-            re.search(r'website_sale_main_button[^>]*disabled', resp.text),
+            re.search(r'website_sale_main_button[^>]*\bdisabled\b', resp.text),
             "the checkout continue button must be disabled")
+        self.assertTrue(
+            re.search(r'website_sale_main_button[^>]*aria-disabled="true"', resp.text),
+            "the disabled button must be truly unclickable (aria-disabled)")
 
     def test_blocked_flag_on_order(self):
         order = self.env['sale.order'].create({
