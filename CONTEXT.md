@@ -56,10 +56,22 @@ any number of Salesmen) all sit under it and share its order history.
 _Avoid_: client, account, customer (bare)
 
 **Company address**:
-A delivery address the Owner has pre-defined for a Customer company (the Owner has
-negotiated shipping for it). At checkout a B2B user may **only select** among their
-company's Company addresses — never create or edit one. Only the Owner manages them
-(backend). Applies to the delivery address; the invoice address stays native.
+An address the Owner pre-defines for a Customer company as a child contact of the
+company `res.partner` (backend, **Owner-only**). Two strictly separate kinds, by
+contact type:
+- **Company delivery address** (type *Delivery*) — selectable **only** as the
+  shipping address. The Owner negotiates shipping for these.
+- **Company invoice address** (type *Invoice*) — selectable **only** as the billing
+  address.
+At checkout a B2B user may **only select** among their company's Company addresses
+(shipping from the delivery ones, billing from the invoice ones) — they **never
+create or edit any address**, at checkout or in the portal; only the Owner does.
+The two kinds never cross: a delivery address can't be billed to, an invoice address
+can't be shipped to — to use one physical location for both, the Owner creates **two
+records** (one of each type; no auto-mirror). A B2B user's own contact is neither
+type, so it is **never selectable** as an order address (they may still edit their
+own login profile). If a company lacks a delivery **or** an invoice address, checkout
+is **blocked** until the Owner defines it.
 _Avoid_: shipping address (bare), new address, approved address (approval is an
 account concept)
 

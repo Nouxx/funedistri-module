@@ -91,6 +91,20 @@ contacts; they must be complete — name/email/phone/address — or native would
 redirect to edit them).
 - Refs: ADR 0005.
 
+#### Step 5b — Address rules extended (designed 2026-06-16, not yet built)
+ADR 0005 was extended (see its 2026-06-16 note + CONTEXT.md). The **delivery** half
+shipped (above); still to build:
+- **Billing locked too**: selectable only among the company's *Invoice*-type
+  contacts; block billing create/edit at checkout (mirror the delivery controller).
+- **Strict type separation**: shipping list = *Delivery* only (done), billing list =
+  *Invoice* only; an address of one type is never selectable as the other.
+- **Portal address book locked**: block create/edit on the `/my` portal address
+  routes too (not just checkout). Login-profile edit stays allowed; the user's own
+  contact is never an order address.
+- **Auto-assign billing** to the company's first Invoice address; **block checkout**
+  when the company lacks a Delivery or an Invoice address (no native fallback).
+- Seed: add *Invoice*-type company addresses; extend `test_address_lock.py`.
+
 ### Step 6 — Later (each its own grilling session)
 - **Stock draw-down** — choosing a coffin Option value consumes the matching loose
   Part's stock; native (BoM/MO) vs custom. See `docs/explore-bom-mo.md`.
