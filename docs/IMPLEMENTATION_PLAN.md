@@ -78,11 +78,17 @@ A **Salesman** sees **no price anywhere**, practical not adversary-proof (ADR 00
   `--db-filter='.*'`; baked into the target).
 - Refs: ADR 0001.
 
-### Step 5 — Locked company address book
+### Step 5 — Locked company address book ✅ (done 2026-06-16)
 At checkout a B2B user may only **select** among their Customer company's
-Owner-defined delivery addresses — no create, no edit, **server-enforced** (a
-crafted POST is rejected). Delivery address only; invoice stays native. Owner
-manages addresses in the backend.
+Owner-defined delivery addresses — no create, no edit, **server-enforced**:
+`shop_address` (GET) + `shop_address/submit` (POST) refuse delivery for a B2B user,
+`shop_update_address` validates the chosen delivery address is in the company's
+allowed set, and `_check_cart_and_addresses` auto-assigns a company delivery
+address so checkout shows the selection list (no redirect loop to the blocked
+form). The delivery "Add Address" button is hidden (UX). Delivery only; invoice
+native. Owner defines the addresses in the backend (child `type='delivery'`
+contacts; they must be complete — name/email/phone/address — or native would
+redirect to edit them).
 - Refs: ADR 0005.
 
 ### Step 6 — Later (each its own grilling session)

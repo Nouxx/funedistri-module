@@ -22,6 +22,19 @@ class ResUsers(models.Model):
         users.partner_id._sync_b2b_role_to_users()
         return users
 
+    def _coffin_is_b2b_user(self):
+        """True for a configured B2B user (Salesman or Store owner).
+
+        Used by the locked address book (Step 5): B2B users may only SELECT among
+        their company's Owner-defined delivery addresses, never create/edit. Staff
+        (the Owner) and the public user are not B2B users, so they are unaffected.
+        """
+        self.ensure_one()
+        return (
+            self.has_group('funedistri_customizations.coffin_salesman_group')
+            or self.has_group('funedistri_customizations.coffin_store_owner_group')
+        )
+
     def _coffin_can_shop(self):
         """Whether this user may reach the shop (Step 3+ access rule).
 

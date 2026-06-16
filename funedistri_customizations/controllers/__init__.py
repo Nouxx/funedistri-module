@@ -4,3 +4,4 @@
 from . import submit_order
 from . import shop_access
 from . import price_masking
+from . import address_lock

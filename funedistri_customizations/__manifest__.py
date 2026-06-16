@@ -51,6 +51,10 @@
         # Render-side "Prix masqué" placeholder across shop/cart/checkout/portal
         # list for the Salesman (JSON-route + portal-detail half is in Python).
         "views/price_visibility_templates.xml",
+        # --- Locked company address book (Step 5) ---
+        # Hide the delivery "Add Address" button for B2B users (server-enforced in
+        # controllers/address_lock.py).
+        "views/address_lock_templates.xml",
     ],
     "assets": {
         "web.assets_frontend": [

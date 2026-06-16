@@ -33,6 +33,7 @@ steps land (see `docs/IMPLEMENTATION_PLAN.md`).
 | **Login gate** (shop gated to logged-in; no public signup; portal = backend lockout) | — (native `website.ecommerce_access`) | — | — | `data/login_gate.xml` (`ecommerce_access='logged_in'` + `auth_signup.invitation_scope='b2b'`) | — | `test_login_gate.py` | 0003 | 3 |
 | **Shop access** (only configured B2B users/staff shop; orphan → /my, no loop) | `res_users.py` (`_coffin_can_shop`) | — | `shop_access.py` (guards `shop`/`product`/`cart`) | — | — | `test_shop_access.py` | 0003 | 3 |
 | **Price masking** (Salesman sees no price: render + JSON routes + portal-detail/PDF block) | — | `price_visibility_templates.xml` (`groups=` placeholder on product/cart/totals/portal-list) | `price_masking.py` (`CoffinCart`, `CoffinDelivery` zero JSON amounts; `CoffinSalePortalMasking` blocks order detail/PDF) | — | `coffin_checkout_mask.js` | `test_price_masking.py` (+ `tests/common.py`) | 0001 | 4 |
+| **Locked address book** (B2B user may only select company delivery addresses) | `res_users.py` (`_coffin_is_b2b_user`) | `address_lock_templates.xml` (hide delivery "Add Address") | `address_lock.py` (block delivery form/submit; validate selected; auto-assign company address) | seed: company delivery addresses | — | `test_address_lock.py` | 0005 | 5 |
 
 Dev seed (local only, in `funedistri_dev_seed`): `seed_coffin_attributes.xml` +
 `seed_coffin_product.xml` give a published, configurable "Cercueil Taica" to build

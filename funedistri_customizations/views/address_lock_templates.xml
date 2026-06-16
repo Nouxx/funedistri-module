@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Step 5 — locked company address book (ADR 0005), UI half.
+
+  Hide the "Add Address" button on the DELIVERY address picker for a B2B user
+  (Salesman / Store owner). They may only SELECT among the company's Owner-defined
+  delivery addresses. This is UX only — the security boundary is server-side in
+  controllers/address_lock.py (a crafted request is refused there). The billing
+  picker is untouched (delivery-only scope).
+
+  groups="!a,!b" → shown unless the user is in group a OR b (i.e. hidden for both
+  B2B roles, shown for staff / non-B2B).
+-->
+<odoo>
+    <template id="delivery_address_list_lock" inherit_id="website_sale.delivery_address_list">
+        <xpath expr="//a[hasclass('o_address_card_add_new')]" position="attributes">
+            <attribute name="groups">!funedistri_customizations.coffin_salesman_group,!funedistri_customizations.coffin_store_owner_group</attribute>
+        </xpath>
+    </template>
+</odoo>

@@ -80,19 +80,39 @@ class CoffinFixtureMixin:
             'email': 'contact@test-pf.example.com', **address,
         })
         portal = env.ref('base.group_portal').id
+        # phone is required for a complete billing address (else checkout would
+        # redirect to complete it before showing the delivery selection).
         store_owner = env['res.users'].create({
             'name': 'Test Store Owner', 'login': STORE_OWNER_LOGIN,
             'password': STORE_OWNER_LOGIN,
             'group_ids': [Command.set([portal])],
             'parent_id': company.id, 'b2b_role': 'store_owner',
-            'email': 'store.owner@test-pf.example.com', **address,
+            'email': 'store.owner@test-pf.example.com', 'phone': '+33240000011',
+            **address,
         })
         salesman = env['res.users'].create({
             'name': 'Test Salesman', 'login': SALESMAN_LOGIN,
             'password': SALESMAN_LOGIN,
             'group_ids': [Command.set([portal])],
             'parent_id': company.id, 'b2b_role': 'salesman',
-            'email': 'salesman@test-pf.example.com', **address,
+            'email': 'salesman@test-pf.example.com', 'phone': '+33240000012',
+            **address,
+        })
+
+        # An Owner-defined delivery address for the company (Step 5) + a rogue
+        # address NOT belonging to the company (to assert it can't be selected).
+        # NB: a delivery address must be COMPLETE for native checkout
+        # (_check_delivery_address requires name, email, phone + the address
+        # fields), else checkout would redirect to edit it.
+        delivery_addr = env['res.partner'].create({
+            'name': 'Funérarium Test', 'parent_id': company.id, 'type': 'delivery',
+            'email': 'funerarium@test-pf.example.com', 'phone': '+33240000099',
+            **address,
+        })
+        rogue_addr = env['res.partner'].create({
+            'name': 'Rogue Address', 'type': 'delivery',
+            'street': '99 rue Pirate', 'city': 'Paris', 'zip': '75001',
+            'country_id': env.ref('base.fr').id,
         })
 
         cls.coffin = coffin
@@ -100,3 +120,5 @@ class CoffinFixtureMixin:
         cls.company = company
         cls.store_owner = store_owner
         cls.salesman = salesman
+        cls.delivery_addr = delivery_addr
+        cls.rogue_addr = rogue_addr
