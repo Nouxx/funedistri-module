@@ -21,3 +21,22 @@ class ResUsers(models.Model):
         # its linked users (including these fresh ones).
         users.partner_id._sync_b2b_role_to_users()
         return users
+
+    def _coffin_can_shop(self):
+        """Whether this user may reach the shop (Step 3+ access rule).
+
+        Kept on the model (not the controller) so it is unit-testable without the
+        web layer. The shop-entry controllers (controllers/shop_access.py) call it.
+
+        - public user → True (the native login gate handles them: Step 3);
+        - internal staff (the Owner) → True (can preview the shop);
+        - configured B2B user (salesman / store owner) → True;
+        - anything else logged in (an orphan with no company/role) → False.
+        """
+        self.ensure_one()
+        if self._is_public() or self.has_group('base.group_user'):
+            return True
+        return (
+            self.has_group('funedistri_customizations.coffin_salesman_group')
+            or self.has_group('funedistri_customizations.coffin_store_owner_group')
+        )

@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
 """Submit-order flow — keep the cart empty after an Order is placed.
 
-Flow A keeps a submitted Pending Order in ``state='draft'`` (Pending = draft +
-coffin_is_submitted). But native ``website_sale`` treats ANY draft order of the
-logged-in partner as a resurrectable "abandoned cart": after we detach the cart
-at submit (``sale_reset()`` pops the session key), the very next request searches
-for a draft order by partner and finds the just-placed Pending Order — bringing it
-back as the cart, so the cart never clears.
-
-We override the cart resolver to drop a submitted Order: it is no longer a cart.
+(Shop-access denial for orphan users lives in controllers/shop_access.py — it
+must redirect to the portal home, not deny via has_ecommerce_access, which would
+bounce a logged-in user into a /web/login redirect loop.)
 """
 
 from odoo import models
