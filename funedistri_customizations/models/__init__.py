@@ -6,3 +6,4 @@ from . import website
 # Step 2 — roles: b2b_role on the contact + the field->group sync.
 from . import res_partner
 from . import res_users
+from . import address_lock

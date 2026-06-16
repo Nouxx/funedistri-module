@@ -50,28 +50,31 @@ class CoffinAddressLock(WebsiteSale):
 
     def _check_cart_and_addresses(self, order_sudo):
         if order_sudo and _b2b():
-            if block := self._coffin_enforce_company_addresses(order_sudo):
-                return block
+            if self._coffin_enforce_company_addresses(order_sudo):
+                # A required company address type is missing. Don't redirect to the
+                # (blocked) create form or back to the cart — let checkout render
+                # with the "continue" button disabled (_is_cart_ready) + a notice.
+                # Still enforce basic cart validity.
+                return self._check_cart(order_sudo)
         return super()._check_cart_and_addresses(order_sudo)
 
     def _coffin_enforce_company_addresses(self, order_sudo):
         """Force the order's billing (and shipping, if deliverable) onto a company
-        address of the right type. Returns a redirect (hard stop) when the company
-        lacks a required address type, else None."""
-        # Billing is always required.
-        invoice_ids = _allowed_partner_ids(order_sudo, 'invoice')
+        address of the right type. Returns True when the company is MISSING a
+        required address type (checkout can't complete), else False."""
+        missing = False
+        invoice_ids = _allowed_partner_ids(order_sudo, 'invoice')  # billing always req.
         if not invoice_ids:
-            return request.redirect('/shop/cart')  # Owner must define an invoice addr
-        if order_sudo.partner_invoice_id.id not in invoice_ids:
+            missing = True
+        elif order_sudo.partner_invoice_id.id not in invoice_ids:
             order_sudo._update_address(min(invoice_ids), ['partner_invoice_id'])
-        # Shipping only for deliverable carts (coffins are goods → deliverable).
-        if not order_sudo.only_services:
+        if not order_sudo.only_services:  # shipping for deliverable carts
             delivery_ids = _allowed_partner_ids(order_sudo, 'delivery')
             if not delivery_ids:
-                return request.redirect('/shop/cart')  # Owner must define a delivery addr
-            if order_sudo.partner_shipping_id.id not in delivery_ids:
+                missing = True
+            elif order_sudo.partner_shipping_id.id not in delivery_ids:
                 order_sudo._update_address(min(delivery_ids), ['partner_shipping_id'])
-        return None
+        return missing
 
     def shop_address(self, **kw):
         # A B2B user edits no address: block the add/edit form for any type.

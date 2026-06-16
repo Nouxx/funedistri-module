@@ -25,8 +25,10 @@ negotiated-shipping margin and billing correctness), not just a UI hide.
   order address.
 - **Auto-assign + hard stop.** Checkout auto-assigns the company's first address of
   each type so the selection list shows (no redirect loop to a blocked form). If the
-  company lacks a Delivery **or** an Invoice address, checkout is **blocked** until
-  the Owner defines it (no fallback to the user's own address).
+  company lacks a Delivery **or** an Invoice address, the checkout page still renders
+  but the **continue button is disabled** with a notice ("contact Funedistri") — the
+  user cannot proceed until the Owner defines it (no fallback to the user's own
+  address, and no silent bounce to the cart).
 - **Server-enforced.** The address routes reject any create/edit by a B2B user and
   validate the chosen address is in the company's allowed set **of the right type** —
   a rogue or wrong-type id in a crafted request is refused.

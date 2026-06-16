@@ -16,6 +16,14 @@
         <xpath expr="//a[hasclass('o_address_card_add_new')]" position="attributes">
             <attribute name="groups">!funedistri_customizations.coffin_salesman_group,!funedistri_customizations.coffin_store_owner_group</attribute>
         </xpath>
+        <!-- B2B + no company delivery address → explain the disabled checkout. -->
+        <xpath expr="//div[@id='delivery_address_list']" position="inside">
+            <div t-if="request.env.user._coffin_is_b2b_user() and not order._coffin_company_has_address('delivery')"
+                 class="alert alert-warning mt-2" role="status">
+                Aucune adresse de livraison n'est définie pour votre société.
+                Contactez Funedistri pour pouvoir commander.
+            </div>
+        </xpath>
     </template>
 
     <!-- Portal /my/addresses: mark the address section for a B2B user so CSS
@@ -41,6 +49,14 @@
         <xpath expr="//div[@id='billing_address_list']" position="attributes">
             <attribute name="class"/>
             <attribute name="t-attf-class">mb-3 pt-2 {{'coffin-addr-locked' if request.env.user._coffin_is_b2b_user() else ''}}</attribute>
+        </xpath>
+        <!-- B2B + no company invoice address → explain the disabled checkout. -->
+        <xpath expr="//div[@id='billing_address_list']" position="inside">
+            <div t-if="request.env.user._coffin_is_b2b_user() and not order._coffin_company_has_address('invoice')"
+                 class="alert alert-warning mt-2" role="status">
+                Aucune adresse de facturation n'est définie pour votre société.
+                Contactez Funedistri pour pouvoir commander.
+            </div>
         </xpath>
     </template>
 </odoo>

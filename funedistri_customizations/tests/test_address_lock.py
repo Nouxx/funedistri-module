@@ -7,6 +7,8 @@ billing ← Invoice contacts; neither crosses; their own contact is never select
 Server-enforced.
 """
 
+import re
+
 from odoo.tests import HttpCase, TransactionCase, tagged
 
 from .common import CoffinFixtureMixin, SALESMAN_LOGIN
@@ -102,3 +104,51 @@ class TestAddressLock(CoffinFixtureMixin, HttpCase):
         self._login_with_cart()
         with self.assertRaises(Exception):
             self._update_address(self.rogue_addr, 'delivery')
+
+
+@tagged('post_install', '-at_install')
+class TestAddressBlockOnMissing(CoffinFixtureMixin, HttpCase):
+    """A B2B user whose company lacks a required address type reaches checkout
+    with the continue button DISABLED + a notice — not a bounce to the cart."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        env = cls.env
+        addr = {'street': '1 rue X', 'city': 'Lyon', 'zip': '69000',
+                'country_id': env.ref('base.fr').id}
+        # Company with a Delivery address but NO Invoice address.
+        co = env['res.partner'].create({
+            'name': 'NoInvoice Co', 'is_company': True,
+            'email': 'c@noinv.test', **addr})
+        env['res.partner'].create({
+            'name': 'Livraison', 'parent_id': co.id, 'type': 'delivery',
+            'email': 'd@noinv.test', 'phone': '+33100000001', **addr})
+        cls.ni_user = env['res.users'].create({
+            'name': 'NI Salesman', 'login': 'ni_salesman', 'password': 'ni_salesman',
+            'group_ids': [(6, 0, [env.ref('base.group_portal').id])],
+            'parent_id': co.id, 'b2b_role': 'salesman',
+            'email': 'ni@noinv.test', 'phone': '+33100000002', **addr})
+
+    def test_blocked_company_reaches_checkout_button_disabled(self):
+        self.authenticate('ni_salesman', 'ni_salesman')
+        self.make_jsonrpc_request('/shop/cart/add', {
+            'product_template_id': self.coffin.id,
+            'product_id': self.coffin_variant.id, 'quantity': 1})
+        resp = self.url_open('/shop/checkout', allow_redirects=True)
+        # Renders checkout (not bounced to /shop/cart).
+        self.assertTrue(resp.url.endswith('/shop/checkout'))
+        # Explanatory notice shown.
+        self.assertIn('Aucune adresse de facturation', resp.text)
+        # The continue button is rendered disabled.
+        self.assertTrue(
+            re.search(r'website_sale_main_button[^>]*disabled', resp.text),
+            "the checkout continue button must be disabled")
+
+    def test_blocked_flag_on_order(self):
+        order = self.env['sale.order'].create({
+            'partner_id': self.ni_user.partner_id.id,
+            'order_line': [(0, 0, {'product_id': self.coffin_variant.id,
+                                   'product_uom_qty': 1})]})
+        self.assertTrue(order._coffin_addresses_blocked(),
+                        "company without an invoice address is blocked")
