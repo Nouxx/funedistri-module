@@ -157,18 +157,9 @@
             <field name="country_id" ref="base.fr"/>
         </record>
 
-        <!-- Company B — Owner-defined INVOICE address. -->
-        <record id="seed_b_invoice_1" model="res.partner">
-            <field name="name">Company B — Service Comptabilité</field>
-            <field name="parent_id" ref="seed_company_b"/>
-            <field name="type">invoice</field>
-            <field name="email">compta@company-b.example.com</field>
-            <field name="phone">+33299000061</field>
-            <field name="street">25 avenue Victor Hugo</field>
-            <field name="city">Rennes</field>
-            <field name="zip">35000</field>
-            <field name="country_id" ref="base.fr"/>
-        </record>
+        <!-- Company B has NO invoice address on purpose: a B2B user of Company B
+             cannot check out (block-on-missing, ADR 0005) until the Owner defines
+             one. Company B keeps its delivery address (above). -->
 
         <!-- ===================== ORPHAN (no company) ===================== -->
         <!-- A portal user with NO parent_id → not under any customer company. Its
