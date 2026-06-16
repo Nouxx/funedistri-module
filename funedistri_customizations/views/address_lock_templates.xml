@@ -18,6 +18,16 @@
         </xpath>
     </template>
 
+    <!-- Portal /my/addresses: mark the address section for a B2B user so CSS
+         (static/src/css/coffin_address_lock.css) visually disables the add/edit/
+         remove controls — they're server-blocked, this conveys it. -->
+    <template id="portal_my_addresses_lock" inherit_id="portal.my_addresses">
+        <xpath expr="//section[hasclass('o_portal_addresses')]" position="attributes">
+            <attribute name="class"/>
+            <attribute name="t-attf-class">o_portal_addresses {{'coffin-addr-locked' if request.env.user._coffin_is_b2b_user() else ''}}</attribute>
+        </xpath>
+    </template>
+
     <!-- Same for the BILLING picker (Step 5b: billing is locked too). Its add
          button uses t-attf-class (dynamic), so hasclass() can't match it — target
          it by its t-att-href instead. -->

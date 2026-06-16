@@ -1,0 +1,13 @@
+/* Step 5b — visually disable the portal address action controls for a B2B user.
+   The routes are already server-blocked (controllers/address_lock.py); this just
+   conveys "nothing can be done" so the buttons aren't clickable-but-dead. The
+   marker class is added to the address section for B2B users only
+   (views/address_lock_templates.xml). We disable only the ACTION controls
+   (add / edit / remove), never the address cards themselves (still selectable). */
+.coffin-addr-locked .o_address_card_add_new,
+.coffin-addr-locked .js_edit_address,
+.coffin-addr-locked .o_remove_address {
+    pointer-events: none;
+    opacity: 0.45;
+    cursor: not-allowed;
+}

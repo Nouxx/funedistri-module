@@ -61,6 +61,8 @@
             # Step 4: keep the checkout Confirm button usable when the totals
             # table is masked away for a Salesman (see the file header).
             "funedistri_customizations/static/src/js/coffin_checkout_mask.js",
+            # Step 5b: visually disable the portal address controls for a B2B user.
+            "funedistri_customizations/static/src/css/coffin_address_lock.css",
         ],
     },
     # NO demo data. Local dev test records live in the separate, local-only

@@ -62,6 +62,14 @@ class TestAddressLock(CoffinFixtureMixin, HttpCase):
             self.make_jsonrpc_request('/my/address/archive',
                                       {'partner_id': self.invoice_addr.id})
 
+    def test_portal_address_controls_visually_disabled(self):
+        # The /my/addresses action controls are marked disabled for a B2B user
+        # (the CSS class on the section drives the visual disable).
+        self.authenticate(SALESMAN_LOGIN, SALESMAN_LOGIN)
+        html = self.url_open('/my/addresses').text
+        self.assertIn('coffin-addr-locked', html,
+                      "B2B user's address controls must be marked disabled")
+
     # --- selection: right type only, strictly separated --- #
     def test_select_allowed_delivery_and_billing(self):
         self._login_with_cart()
