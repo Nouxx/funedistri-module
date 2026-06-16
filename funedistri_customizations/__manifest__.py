@@ -32,6 +32,12 @@
     ],
     # data = XML/CSV loaded on install/update, in order. Grouped per feature.
     "data": [
+        # --- Roles foundation (Step 2) ---
+        # The two hidden security groups. Load FIRST: the b2b_role->group sync
+        # resolves them by xmlid at runtime.
+        "security/coffin_groups.xml",
+        # b2b_role dropdown on the contact form.
+        "views/res_partner_views.xml",
         # --- Submit-order flow (Step 1) ---
         # Owner-notification email template. Load before anything that references
         # it; the model looks it up by xmlid at submit time.

@@ -27,7 +27,7 @@ Empty installable module (`depends: website_sale, sale, sale_management, contact
 empty `data`/`assets`). `make dev` boots, module installs, shop reachable. Seed
 reduced to `seed_coffin_attributes.xml` only.
 
-### Step 1 — Tracer spine
+### Step 1 — Tracer spine ✅ (done 2026-06-15)
 One **native** configurable coffin (product attributes, "no variant" mode) shows in
 the shop. A custom **"Submit order"** button (no payment) creates a **Pending**
 (`sale.order` draft) Order for the user's company, and notifies the Owner (a
@@ -38,7 +38,7 @@ validation" page; the Order shows **Pending** in portal history.
 - ⚠️ Unguarded at this point — local only, do NOT push to prod until step 3.
 - Refs: ADR 0004 (native config), CLAUDE.md order workflow.
 
-### Step 2 — Roles foundation
+### Step 2 — Roles foundation ✅ (done 2026-06-16)
 Add the `b2b_role` Selection field (`salesman` / `store_owner`) on `res.partner`,
 with a `write()`/`create()` sync to two hidden security groups
 (`coffin_salesman_group` / `coffin_store_owner_group`). Dropdown on the contact

@@ -28,6 +28,7 @@ steps land (see `docs/IMPLEMENTATION_PLAN.md`).
 | Feature | Models | Views | Controllers | Security / Data | JS/CSS | Tests | ADR | Step |
 |---|---|---|---|---|---|---|---|---|
 | **Submit-order flow** (cart → Pending Order, owner notify, portal status, cart cleared after submit) | `sale_order.py` (`coffin_is_submitted`, `_coffin_submit_as_pending`, `_coffin_notify_owner`); `website.py` (`_get_and_cache_current_cart` drops submitted Orders) | `submit_order_templates.xml` (button + confirmation + portal badge) | `submit_order.py` (`shop_submit_order`, portal domain) | `data/mail_template_owner_order.xml` | — | `test_submit_order.py` | — | 1 |
+| **B2B roles** (`b2b_role` → hidden groups; portal-stays-portal guardrail) | `res_partner.py` (`b2b_role`, `_sync_b2b_role_to_users`); `res_users.py` (`create` sync) | `res_partner_views.xml` (role dropdown) | — | `security/coffin_groups.xml` (2 hidden groups) | — | `test_b2b_role_sync.py` | 0003 | 2 |
 
 Dev seed (local only, in `funedistri_dev_seed`): `seed_coffin_attributes.xml` +
 `seed_coffin_product.xml` give a published, configurable "Cercueil Taica" to build

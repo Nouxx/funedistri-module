@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Step 2 — surface the b2b_role dropdown on the contact form (backend only). This
+  is the ONE control the Owner uses to grant a B2B user their role; the hidden
+  security groups are kept in sync automatically (models/res_partner.py).
+-->
+<odoo>
+    <record id="view_partner_form_b2b_role" model="ir.ui.view">
+        <field name="name">res.partner.form.b2b.role</field>
+        <field name="model">res.partner</field>
+        <!-- Extend Odoo's standard contact form. -->
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <!-- Drop the role selector right after the email field, in the
+                 contact's main info block. -->
+            <field name="email" position="after">
+                <field name="b2b_role"/>
+            </field>
+        </field>
+    </record>
+</odoo>

@@ -45,9 +45,9 @@
         # shop has a real coffin to build + submit. Loads AFTER the attributes it
         # references.
         "data/seed_coffin_product.xml",
-        # NOTE: test B2B companies + users (seed_b2b_users.xml) were removed at the
-        # 2026-06-15 reset — they set b2b_role, a field the main module no longer
-        # defines. Restore this seed when step 2 (Roles foundation) re-adds b2b_role.
+        # Test B2B companies + users (both roles, two companies). Sets b2b_role,
+        # which fires the field->group sync (Step 2). Loads after the product.
+        "data/seed_b2b_users.xml",
     ],
     "installable": True,
     # auto_install=False → never installs itself; must be asked for explicitly
