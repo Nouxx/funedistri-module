@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Step 3 — Login gate (ADR 0003). The protected configurator (shop/cart/checkout)
+  is for logged-in B2B users only; the public marketing landing stays anonymous.
+
+  We use Odoo's NATIVE, controller-enforced gate — no custom auth wall:
+
+  1. website.ecommerce_access = 'logged_in'
+     website_sale's shop / product / cart / checkout controllers call
+     `has_ecommerce_access()` and redirect the PUBLIC user to /web/login. So an
+     anonymous visitor can browse the landing but cannot reach the shop or any
+     coffin/price. Logged-in portal users pass through normally.
+
+     NB on publishing: native `is_published` is all-or-nothing (unpublishing a
+     coffin would also hide it from logged-in B2B users). ADR 0003's "never
+     published to the public" is realised by this gate closing the public door
+     to the shop, NOT by unpublishing — so the seeded coffin stays published for
+     B2B users while staying unreachable by the public. (We also simply never add
+     coffins to the anonymous landing's marketing pages.)
+
+     noupdate is left default (0): this is a security invariant, so it is
+     re-asserted on every module update.
+
+  2. auth_signup.invitation_scope = 'b2b'
+     No public self-registration: accounts exist only because the Owner created
+     the contact + granted portal access ("Approve an account"). 'b2b' = on
+     invitation only; 'b2c' would allow strangers to self-provision.
+
+  Backend lockout itself needs no record here: B2B users are PORTAL users, and
+  Odoo structurally redirects portal users away from the backend (/odoo, /web).
+-->
+<odoo>
+
+    <!-- Gate the shop to logged-in users (updates the existing default website). -->
+    <record id="website.default_website" model="website">
+        <field name="ecommerce_access">logged_in</field>
+    </record>
+
+    <!-- No public self-signup. The param already exists (auth_signup creates it),
+         so we UPSERT it with set_param (a <record> would hit the key's unique
+         constraint). 'b2b' = on invitation only. -->
+    <function model="ir.config_parameter" name="set_param"
+              eval="('auth_signup.invitation_scope', 'b2b')"/>
+
+</odoo>

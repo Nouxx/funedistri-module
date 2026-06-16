@@ -47,11 +47,16 @@ internal group — a B2B user stays portal after any role change.
 - Restore `seed_b2b_users.xml` (two companies, both roles).
 - Refs: ADR 0003 (role-sync guardrail).
 
-### Step 3 — Login gate  → **prod-safe after this**
+### Step 3 — Login gate ✅ (done 2026-06-16)  → **prod-safe after this**
 B2B users are native **portal** users (backend lockout is then structural, no
-custom auth). Two-layer gate on the configurator: (data) coffins are **never
-published** to the public website; (auth) shop/cart/checkout/portal routes force
-login. **No public self-signup.** Public landing stays anonymous.
+custom auth). Done with the native gate: `website.ecommerce_access='logged_in'`
+makes website_sale's shop/product/cart/checkout controllers redirect the public
+user to `/web/login` (the public landing stays anonymous). **No public
+self-signup** via `auth_signup.invitation_scope='b2b'`. See `data/login_gate.xml`.
+- Nuance vs ADR 0003's "coffins never published": native `is_published` is
+  all-or-nothing (unpublishing would also blind logged-in B2B), so the gate
+  closes the public door to the shop instead — same outcome; the seeded coffin
+  stays published for B2B and is unreachable by the public.
 - Refs: ADR 0003.
 
 ### Step 4 — Price masking

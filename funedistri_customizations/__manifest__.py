@@ -38,6 +38,9 @@
         "security/coffin_groups.xml",
         # b2b_role dropdown on the contact form.
         "views/res_partner_views.xml",
+        # --- Login gate (Step 3) ---
+        # Gate the shop to logged-in users + disable public self-signup.
+        "data/login_gate.xml",
         # --- Submit-order flow (Step 1) ---
         # Owner-notification email template. Load before anything that references
         # it; the model looks it up by xmlid at submit time.
