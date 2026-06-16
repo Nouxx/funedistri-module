@@ -2,14 +2,14 @@
 """Address lock — checkout readiness when a company address is missing (ADR 0005).
 
 When a B2B user's company lacks a required address type (no Invoice, or no Delivery
-for a deliverable cart), checkout cannot complete. Rather than bounce the user back
-to the cart, we let the checkout page render with the "continue" button DISABLED
-(native `_is_cart_ready()` already drives that button) plus an explanatory notice —
-clearer than a silent redirect. The Owner must define the missing address.
+for a deliverable cart), checkout cannot complete. The user can still go from the
+cart to the ADDRESS step, but the "continue" button THERE is disabled with a notice
+(see views/address_lock_templates.xml — keyed on these helpers + the current step,
+NOT on `_is_cart_ready`, which also gates the cart's own Checkout button). The Owner
+must define the missing address.
 """
 
 from odoo import models
-from odoo.http import request
 
 
 class SaleOrder(models.Model):
@@ -36,18 +36,3 @@ class SaleOrder(models.Model):
         self.ensure_one()
         return any(not self._coffin_company_has_address(t)
                    for t in self._coffin_required_address_types())
-
-    def _is_cart_ready(self):
-        # Disable the checkout "continue" button for a B2B order whose company is
-        # missing a required address type (block-on-missing) — they cannot proceed
-        # until the Owner defines it.
-        ready = super()._is_cart_ready()
-        if (
-            ready
-            and request
-            and not request.env.user._is_public()
-            and request.env.user._coffin_is_b2b_user()
-            and self._coffin_addresses_blocked()
-        ):
-            return False
-        return ready

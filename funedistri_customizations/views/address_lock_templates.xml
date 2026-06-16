@@ -12,6 +12,17 @@
   B2B roles, shown for staff / non-B2B).
 -->
 <odoo>
+    <!-- Disable the ADDRESS-step "continue" button (not the cart's Checkout button)
+         when a B2B user's company is missing a required address — so the user can
+         reach the address step and be blocked THERE. Keyed on the current step
+         being /shop/checkout, so the cart's own button (same template) stays
+         enabled. -->
+    <template id="navigation_buttons_lock" inherit_id="website_sale.navigation_buttons">
+        <xpath expr="//a[@name='website_sale_main_button']" position="attributes">
+            <attribute name="t-attf-class">btn btn-primary #{(not website_sale_order._is_cart_ready() or (current_website_checkout_step_href == '/shop/checkout' and request.env.user._coffin_is_b2b_user() and website_sale_order._coffin_addresses_blocked())) and 'disabled'} w-100</attribute>
+        </xpath>
+    </template>
+
     <template id="delivery_address_list_lock" inherit_id="website_sale.delivery_address_list">
         <xpath expr="//a[hasclass('o_address_card_add_new')]" position="attributes">
             <attribute name="groups">!funedistri_customizations.coffin_salesman_group,!funedistri_customizations.coffin_store_owner_group</attribute>
