@@ -31,7 +31,7 @@ from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.addons.portal.controllers.portal import CustomerPortal
 
 
-def _b2b(self_or_none=None):
+def _b2b():
     """True when the current user is a B2B user (locked out of editing addresses)."""
     return request.env.user._coffin_is_b2b_user()
 
@@ -67,31 +67,25 @@ class CoffinAddressLock(WebsiteSale):
 
     def _check_cart_and_addresses(self, order_sudo):
         if order_sudo and _b2b():
-            if self._coffin_enforce_company_addresses(order_sudo):
-                # A required company address type is missing. Don't redirect to the
-                # (blocked) create form or back to the cart — let checkout render
-                # with the "continue" button disabled (_is_cart_ready) + a notice.
-                # Still enforce basic cart validity.
-                return self._check_cart(order_sudo)
+            # A B2B user can't create/edit addresses, so we NEVER defer to native
+            # address checks: those redirect to the (blocked) edit form when an
+            # address is missing OR incomplete, which would loop against our block.
+            # We assign the company addresses ourselves; a missing required type is
+            # surfaced by the disabled continue button + notice (not a redirect).
+            self._coffin_enforce_company_addresses(order_sudo)
+            return self._check_cart(order_sudo)
         return super()._check_cart_and_addresses(order_sudo)
 
     def _coffin_enforce_company_addresses(self, order_sudo):
-        """Force the order's billing (and shipping, if deliverable) onto a company
-        address of the right type. Returns True when the company is MISSING a
-        required address type (checkout can't complete), else False."""
-        missing = False
+        """Assign the order's billing (and shipping, if deliverable) onto a company
+        address of the right type, when not already set to one."""
         invoice_ids = _allowed_partner_ids(order_sudo, 'invoice')  # billing always req.
-        if not invoice_ids:
-            missing = True
-        elif order_sudo.partner_invoice_id.id not in invoice_ids:
+        if invoice_ids and order_sudo.partner_invoice_id.id not in invoice_ids:
             order_sudo._update_address(min(invoice_ids), ['partner_invoice_id'])
         if not order_sudo.only_services:  # shipping for deliverable carts
             delivery_ids = _allowed_partner_ids(order_sudo, 'delivery')
-            if not delivery_ids:
-                missing = True
-            elif order_sudo.partner_shipping_id.id not in delivery_ids:
+            if delivery_ids and order_sudo.partner_shipping_id.id not in delivery_ids:
                 order_sudo._update_address(min(delivery_ids), ['partner_shipping_id'])
-        return missing
 
     def shop_address(self, **kw):
         # A B2B user edits no address: block the add/edit form for any type.
