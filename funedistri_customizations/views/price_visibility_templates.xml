@@ -71,6 +71,32 @@
         </xpath>
     </template>
 
+    <!-- 1b) SHOP GRID TILE — the /shop listing renders its own price block
+         (div.o_wsale_product_sub), NOT website_sale.product_price. Mask the whole
+         price sub-block and show the placeholder, else a Salesman sees the catalog
+         price on the grid. -->
+    <template id="products_item_salesman_mask" inherit_id="website_sale.products_item">
+        <xpath expr="//div[contains(@class, 'o_wsale_product_sub')]" position="attributes">
+            <attribute name="groups">!funedistri_customizations.coffin_salesman_group</attribute>
+        </xpath>
+        <xpath expr="//div[contains(@class, 'o_wsale_product_sub')]" position="after">
+            <div groups="funedistri_customizations.coffin_salesman_group"
+                 class="o_wsale_product_sub">
+                <t t-call="funedistri_customizations.coffin_price_masked"/>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- 1c) OPTION EXTRA-PRICE BADGES — the configurator shows a "+ X €" badge per
+         priced option value (website_sale.badge_extra_price, used on the product
+         page). Suppress the whole badge for a Salesman so option prices don't leak
+         (no placeholder needed — the option stays selectable, just price-free). -->
+    <template id="badge_extra_price_salesman_mask" inherit_id="website_sale.badge_extra_price">
+        <xpath expr="//span[@t-if='price_extra']" position="attributes">
+            <attribute name="groups">!funedistri_customizations.coffin_salesman_group</attribute>
+        </xpath>
+    </template>
+
     <!-- 4) PORTAL ORDER LIST (/my/orders) — the "Total" column. -->
     <template id="portal_my_orders_salesman_mask" inherit_id="sale.portal_my_orders">
         <xpath expr="//td[@name='order_amount_total']/span" position="attributes">

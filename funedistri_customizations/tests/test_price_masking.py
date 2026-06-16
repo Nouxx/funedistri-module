@@ -76,13 +76,15 @@ class TestPriceMasking(CoffinFixtureMixin, HttpCase):
     def test_salesman_html_shows_placeholder_not_price(self):
         self.authenticate(SALESMAN_LOGIN, SALESMAN_LOGIN)
         self._add_one_coffin()
-        for url in (self.coffin.website_url, '/shop/cart'):
+        # The masked placeholder must appear, and NO real price may render, on the
+        # shop grid, the product page (incl. option +X€ badges) and the cart.
+        for url in ('/shop', self.coffin.website_url, '/shop/cart'):
             html = self.url_open(url).text
             self.assertIn(_MASK_TEXT, html,
                           f"Salesman must see the masked placeholder on {url}")
-        cart_html = self.url_open('/shop/cart').text
-        self.assertFalse(_rendered_a_real_price(cart_html),
-                         "Salesman must never see a rendered price on /shop/cart")
+            self.assertFalse(
+                _rendered_a_real_price(html),
+                f"Salesman must never see a rendered price on {url}")
 
     def test_salesman_delivery_routes_emit_no_price(self):
         self.authenticate(SALESMAN_LOGIN, SALESMAN_LOGIN)
