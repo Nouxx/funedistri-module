@@ -4,6 +4,16 @@
    marker class is added to the address section for B2B users only
    (views/address_lock_templates.xml). We disable only the ACTION controls
    (add / edit / remove), never the address cards themselves (still selectable). */
+/* Blocked checkout continue button. website_sale JS toggles the bootstrap
+   'disabled' CLASS based on cart_ready (re-enabling our server-disabled button),
+   but never touches aria-disabled — so key the visual+click disable off that. The
+   href is also neutralised server-side ('#'), so it can't navigate even if clicked. */
+a[name="website_sale_main_button"][aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
 .coffin-addr-locked .o_address_card_add_new,
 .coffin-addr-locked .js_edit_address,
 .coffin-addr-locked .o_remove_address,
