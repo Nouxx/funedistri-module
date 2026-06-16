@@ -72,7 +72,10 @@ manages addresses in the backend.
 ### Step 6 — Later (each its own grilling session)
 - **Stock draw-down** — choosing a coffin Option value consumes the matching loose
   Part's stock; native (BoM/MO) vs custom. See `docs/explore-bom-mo.md`.
-- **Orphan-user order visibility** — a user in no company should see no orders.
+- ~~**Orphan-user order visibility**~~ ✅ RESOLVED 2026-06-16: native scoping already
+  handles it — an orphan's `commercial_partner_id` is itself, so it sees no orders
+  and never another company's. No code needed; locked by `test_order_visibility.py`.
+  Orphan added to the dev seed (login `orphan`).
 
 ## Out of scope (v1)
 Conditional reveal / custom config fields (ADR 0004); online payment; shipped-state

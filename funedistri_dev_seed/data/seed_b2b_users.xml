@@ -101,5 +101,21 @@
             <field name="country_id" ref="base.fr"/>
         </record>
 
+        <!-- ===================== ORPHAN (no company) ===================== -->
+        <!-- A portal user with NO parent_id → not under any customer company. Its
+             commercial_partner_id is therefore itself, so native portal scoping
+             limits it to its OWN documents (it placed none) → it sees NO orders,
+             and never another company's. This is the misconfigured-account case
+             from the plan (Step 6); we use it to PROVE the "orphan sees nothing"
+             guarantee, not to grant cross-company access. No b2b_role: it is not a
+             configured shopper. -->
+        <record id="seed_orphan_user" model="res.users">
+            <field name="name">Orphan User (no company)</field>
+            <field name="login">orphan</field>
+            <field name="password">orphan</field>
+            <field name="group_ids" eval="[Command.set([ref('base.group_portal')])]"/>
+            <field name="email">orphan@example.com</field>
+        </record>
+
     </data>
 </odoo>
