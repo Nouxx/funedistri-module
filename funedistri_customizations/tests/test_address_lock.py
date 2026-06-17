@@ -72,6 +72,15 @@ class TestAddressLock(CoffinFixtureMixin, HttpCase):
         self.assertIn('coffin-addr-locked', html,
                       "checkout billing block must be marked disabled for B2B")
 
+    def test_checkout_delivery_list_marked_disabled(self):
+        # The delivery card list is marked so CSS disables the per-card edit/remove
+        # controls at checkout (not just on the portal).
+        self._login_with_cart()
+        html = self.url_open('/shop/checkout', allow_redirects=True).text
+        self.assertTrue(
+            re.search(r'id="delivery_address_list"[^>]*coffin-addr-locked', html),
+            "checkout delivery list must be marked disabled for B2B")
+
     def test_portal_address_controls_visually_disabled(self):
         # The /my/addresses action controls are marked disabled for a B2B user
         # (the CSS class on the section drives the visual disable).

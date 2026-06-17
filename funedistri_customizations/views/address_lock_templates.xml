@@ -41,6 +41,11 @@
         <xpath expr="//a[hasclass('o_address_card_add_new')]" position="attributes">
             <attribute name="groups">!funedistri_customizations.coffin_salesman_group,!funedistri_customizations.coffin_store_owner_group</attribute>
         </xpath>
+        <!-- Mark the delivery block so the CSS disables the per-card edit/remove
+             controls for a B2B user (they're server-blocked; this conveys it). -->
+        <xpath expr="//div[@id='delivery_address_list']" position="attributes">
+            <attribute name="t-attf-class">{{'coffin-addr-locked' if request.env.user._coffin_is_b2b_user() else ''}}</attribute>
+        </xpath>
         <!-- B2B + no company delivery address → explain the disabled checkout. -->
         <xpath expr="//div[@id='delivery_address_list']" position="inside">
             <div t-if="request.env.user._coffin_is_b2b_user() and not order._coffin_company_has_address('delivery')"
