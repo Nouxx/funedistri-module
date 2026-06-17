@@ -1,6 +1,11 @@
 # 4. v1 captures all config data with native attributes; no conditional reveal
 
-Date: 2026-06-14 · Status: Accepted, reaffirmed 2026-06-15
+Date: 2026-06-14 · Status: Accepted, reaffirmed 2026-06-15 · **Amended by ADR 0007**
+
+> **Amendment (ADR 0007, 2026-06-17):** "all options no-variant" is narrowed.
+> **Stock-consuming** options (Parts sold loose + consumed in a coffin) become real
+> **dynamic** variants so native BoM draw-down can key off them; free-text /
+> informational options below stay no-variant / `is_custom` as written here.
 
 ## Decision
 

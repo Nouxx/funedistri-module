@@ -106,7 +106,37 @@ ADR 0005 extended (see its 2026-06-16 note + CONTEXT.md). Built:
 
 ### Step 6 — Later (each its own grilling session)
 - **Stock draw-down** — choosing a coffin Option value consumes the matching loose
-  Part's stock; native (BoM/MO) vs custom. See `docs/explore-bom-mo.md`.
+  Part's stock. See `docs/explore-bom-mo.md`. **Grilled 2026-06-17 — partly resolved:**
+  - Every stock-consuming Option **is already a standalone, independently-sold
+    product** (plate, handles, urne…); the attribute is UX sugar. The chosen value
+    must draw down **that product's shared stock** (loose sale + coffin sale = one pool).
+  - **Native BoM path chosen** over a custom stock-move-at-Validate. Consequence:
+    stock-consuming options move from no-variant to **real variants** (ADR 0004's
+    no-variant mode can't drive BoM "Apply on Variants"). Variant mode **locked to
+    "Dynamically"** (2026-06-17) so combos materialise only when ordered (no idle
+    180-SKU matrix); Apply-on-Variants still applies to dynamically-created variants.
+  - **Mixed model:** only stock options become variants; free-text/informational
+    options (engraving, death date, delivery date) **stay no-variant/`is_custom`**.
+  - **Trigger:** on **Validate** (`action_confirm`) Odoo reserves the components →
+    that is the oversell protection, at the right moment. Actual decrement happens at
+    the Owner's eventual (informal) delivery validation — consistent with "Shipped
+    out of scope".
+  - **OPEN FORK — shortlisted, not yet picked:**
+    1. **Kit BoM** — coffin is phantom; delivery explodes into the chosen Part
+       products; no extra paperwork; coffin not tracked as finished-good stock.
+    2. **Normal BoM + MO** — one Manufacturing Order per coffin to open/close;
+       coffin becomes its own +1 finished-good stock; more control + paperwork.
+  - **Oversell @ Pending (resolved):** Owner is the backstop. Pending reserves
+    nothing by design; first Validate reserves, later ones get the native stock
+    warning and the Owner reorders/contacts. No code.
+  - **Value→Part mapping (resolved-by-construction):** native **BoM component lines
+    + "Apply on Variants"** (oak-handle component → applies to value *Oak*). One BoM
+    per Coffin model, ~one line per value. No custom link field.
+  - **Double-counting (resolved-by-construction):** under Kit/MO the Part components
+    carry **cost**, not a customer line price; coffin price stays on the variant
+    `price_extra`. Caveat: Owner enters each Part's price twice (coffin `price_extra`
+    + standalone product list price) — can diverge; data hygiene, not a bug.
+  - Still open: only the **Kit-vs-MO** pick above.
 - ~~**Orphan-user order visibility**~~ ✅ RESOLVED 2026-06-16: native scoping already
   handles it — an orphan's `commercial_partner_id` is itself, so it sees no orders
   and never another company's. No code needed; locked by `test_order_visibility.py`.
